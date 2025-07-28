@@ -1,0 +1,223 @@
+'use client'
+
+import { useState } from 'react'
+import { Search, Lightbulb, Sparkles, ArrowRight, Loader2 } from 'lucide-react'
+
+export default function Home() {
+  const [inputText, setInputText] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [projectIdeas, setProjectIdeas] = useState<string[]>([])
+  const [hasSearched, setHasSearched] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputText.trim()) return
+
+    setIsLoading(true)
+    setHasSearched(true)
+    
+    // Simulate API call - replace with your actual data scraping endpoint
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate loading
+      
+      // Mock project ideas - replace with actual API response
+      const mockIdeas = [
+        `AI-powered ${inputText} optimization platform`,
+        `Social marketplace for ${inputText} enthusiasts`,
+        `Analytics dashboard for ${inputText} performance tracking`,
+        `Mobile app connecting ${inputText} professionals`,
+        `Automated ${inputText} workflow management system`
+      ]
+      
+      setProjectIdeas(mockIdeas)
+    } catch (error) {
+      console.error('Error generating ideas:', error)
+      setProjectIdeas(['Error generating ideas. Please try again.'])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleReset = () => {
+    setInputText('')
+    setProjectIdeas([])
+    setHasSearched(false)
+    setIsLoading(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Header */}
+      <header className="border-b border-white/10 backdrop-blur-sm bg-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-2xl font-bold text-white">xxit</span>
+            </div>
+            <nav className="hidden md:flex items-center space-x-6 text-sm text-gray-300">
+              <a href="#" className="hover:text-white transition-colors">Features</a>
+              <a href="#" className="hover:text-white transition-colors">Pricing</a>
+              <a href="#" className="hover:text-white transition-colors">About</a>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm mb-6">
+            <Lightbulb className="w-4 h-4 mr-2" />
+            AI-Powered Project Discovery
+          </div>
+          
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            Turn Your Ideas Into
+            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent"> Unique Projects</span>
+          </h1>
+          
+          <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Enter any concept and our advanced data scraping technology will generate personalized, 
+            innovative project ideas tailored to your vision.
+          </p>
+        </div>
+
+        {/* Input Form */}
+        <div className="mb-16">
+          <form onSubmit={handleSubmit} className="relative">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity"></div>
+              <div className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-2">
+                <div className="flex items-center">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={inputText}
+                      onChange={(e) => setInputText(e.target.value)}
+                      placeholder="Enter your concept, technology, or industry..."
+                      className="w-full pl-12 pr-4 py-4 bg-transparent text-white placeholder-gray-400 text-lg focus:outline-none"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!inputText.trim() || isLoading}
+                    className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 text-lg"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Generate Ideas</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* Results Section */}
+        {hasSearched && (
+          <div className="animate-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center">
+                  <Lightbulb className="w-6 h-6 mr-2 text-purple-400" />
+                  Project Ideas
+                </h2>
+                {projectIdeas.length > 0 && (
+                  <button
+                    onClick={handleReset}
+                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                  >
+                    Start New Search
+                  </button>
+                )}
+              </div>
+
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-16 bg-white/10 rounded-xl"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : projectIdeas.length > 0 ? (
+                <div className="space-y-4">
+                  {projectIdeas.map((idea, index) => (
+                    <div
+                      key={index}
+                      className="group p-6 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/30 rounded-xl transition-all duration-200 cursor-pointer"
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                          <span className="text-white font-bold text-sm">{index + 1}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white text-lg leading-relaxed group-hover:text-purple-100 transition-colors">
+                            {idea}
+                          </p>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-purple-400 transition-colors opacity-0 group-hover:opacity-100" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {/* Features Section */}
+        {!hasSearched && (
+          <div className="grid md:grid-cols-3 gap-8 mt-20">
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Search className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Smart Data Scraping</h3>
+              <p className="text-gray-400">Advanced algorithms analyze web data to find trending opportunities</p>
+            </div>
+            
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Lightbulb className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Unique Ideas</h3>
+              <p className="text-gray-400">Generate original project concepts tailored to your specific input</p>
+            </div>
+            
+            <div className="text-center p-6">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Instant Results</h3>
+              <p className="text-gray-400">Get multiple project ideas in seconds, not hours of research</p>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center text-gray-400">
+            <p>&copy; 2025 xxit. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
