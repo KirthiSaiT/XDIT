@@ -2,13 +2,19 @@
 
 import { useState } from 'react'
 import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus } from 'lucide-react'
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from '@clerk/nextjs'
 
 const Home: React.FC = () => {
   const [inputValue, setInputValue] = useState<string>('')
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // Handle form submission logic here
     console.log('Submitted Concept:', inputValue)
   }
 
@@ -42,17 +48,38 @@ const Home: React.FC = () => {
             <span className="text-2xl font-bold text-slate-900">xxit</span>
           </div>
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
-            <a href="#" className="hover:text-blue-600 transition-colors">Features</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">Pricing</a>
-            <a href="#" className="hover:text-blue-600 transition-colors">About</a>
+            <a href="#" className="hover:text-blue-600 transition-colors">
+              Features
+            </a>
+            <a href="#" className="hover:text-blue-600 transition-colors">
+              Pricing
+            </a>
+            <a href="#" className="hover:text-blue-600 transition-colors">
+              About
+            </a>
           </nav>
-          <a
-            href="#"
-            className="hidden sm:flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Sign Up</span>
-          </a>
+          <div className="flex items-center">
+            {/* --- CLERK AUTHENTICATION --- */}
+            <SignedOut>
+              <div className="hidden sm:flex items-center space-x-4">
+                <SignInButton mode="modal">
+                  <button className="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors">
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="flex items-center space-x-2 px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-md shadow-blue-600/20 hover:shadow-lg hover:shadow-blue-600/30">
+                    <UserPlus className="w-4 h-4" />
+                    <span>Sign Up</span>
+                  </button>
+                </SignUpButton>
+              </div>
+            </SignedOut>
+            <SignedIn>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+            {/* --- END CLERK AUTHENTICATION --- */}
+          </div>
         </div>
       </header>
 
@@ -74,7 +101,9 @@ const Home: React.FC = () => {
           </h1>
 
           <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto">
-            Transform your concepts into innovative SaaS solutions. Our platform analyzes market trends to generate unique, viable project ideas for you.
+            Transform your concepts into innovative SaaS solutions. Our platform
+            analyzes market trends to generate unique, viable project ideas for
+            you.
           </p>
         </div>
 
@@ -119,8 +148,12 @@ const Home: React.FC = () => {
               <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/30">
                 {feature.icon}
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">{feature.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{feature.desc}</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-slate-500 text-sm leading-relaxed">
+                {feature.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -132,8 +165,12 @@ const Home: React.FC = () => {
           <div className="flex justify-between items-center text-slate-500 text-sm">
             <p>&copy; {new Date().getFullYear()} xxit. All rights reserved.</p>
             <div className="flex space-x-6">
-              <a href="#" className="hover:text-blue-600">Privacy Policy</a>
-              <a href="#" className="hover:text-blue-600">Terms of Service</a>
+              <a href="#" className="hover:text-blue-600">
+                Privacy Policy
+              </a>
+              <a href="#" className="hover:text-blue-600">
+                Terms of Service
+              </a>
             </div>
           </div>
         </div>
