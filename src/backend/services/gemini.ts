@@ -56,11 +56,11 @@ function extractKeywordsFromText(prompt: string): string[] {
 
 export async function extractKeywords(prompt: string): Promise<string[]> {
   try {
-    console.log('🔍 Attempting keyword extraction with Gemini Flash...')
+    console.log('🔍 Attempting keyword extraction with Gemini Pro...')
     
     return await retryWithBackoff(async () => {
       // Use Flash model which has higher quota limits
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
       
       const keywordExtractionPrompt = `Extract 3-5 keywords from: "${prompt}"
 Return only keywords separated by commas. Focus on: technology, industry, domain, function.
@@ -107,7 +107,7 @@ export async function analyzeScrapedData(
     
     return await retryWithBackoff(async () => {
       // Use Flash model for better quota management
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
       
       const analysisPrompt = `Generate 5 SaaS ideas based on:
 Prompt: "${prompt}"

@@ -56,7 +56,7 @@ const Home: React.FC = () => {
 
     try {
       // Call Python backend instead of Node.js API
-      const response = await fetch('http://127.0.0.1:8000/api/generate-ideas', {
+      const response = await fetch('/api/generate-ideas', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,7 +83,7 @@ const Home: React.FC = () => {
       
       // Check if it's a connection error
       if (err instanceof TypeError && err.message.includes('fetch')) {
-        setError('Cannot connect to the Python backend. Please make sure it\'s running on http://127.0.0.1:8000')
+        setError('Cannot connect to the backend. Please try again later.')
       } else {
         setError(err instanceof Error ? err.message : 'Failed to generate ideas. Please try again.')
       }
@@ -163,6 +163,7 @@ const Home: React.FC = () => {
             </SignedIn>
           </div>
         </div>
+        
       </header>
 
       {/* Main Content */}
@@ -171,7 +172,7 @@ const Home: React.FC = () => {
         <div className="text-center mb-20">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold mb-6">
             <Lightbulb className="w-5 h-5 mr-2" />
-            Powered by Gemini 2.5 Pro & Python
+            Powered by Gemini 1.5 Pro & Node.js
           </div>
 
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
@@ -183,8 +184,8 @@ const Home: React.FC = () => {
           </h1>
 
           <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto">
-            Transform your concepts into innovative SaaS solutions. Our Python-powered platform
-            scrapes Reddit and X in real-time, then uses Google Gemini 2.5 Pro to generate 
+            Transform your concepts into innovative SaaS solutions. Our platform
+            scrapes Reddit and X in real-time, then uses Google Gemini 1.5 Pro to generate 
             unique, viable project ideas.
           </p>
         </div>
@@ -236,7 +237,7 @@ const Home: React.FC = () => {
               <strong>Error:</strong> {error}
               {error.includes('Python backend') && (
                 <div className="mt-2 text-xs text-red-500">
-                  To start the Python backend, run: <code className="bg-red-100 px-1 rounded">cd python_backend && python main.py</code>
+                  To start the backend, run: <code className="bg-red-100 px-1 rounded">npm run dev</code>
                 </div>
               )}
             </div>
@@ -264,7 +265,7 @@ const Home: React.FC = () => {
                 </div>
                 {sourcesCount && (
                   <div className="flex items-center space-x-6 text-sm text-slate-600">
-                    <span>🐍 Powered by Python Backend</span>
+                    <span>🚀 Powered by Next.js</span>
                     <span>📊 {sourcesCount.reddit} Reddit posts analyzed</span>
                     <span>🐦 {sourcesCount.x} X posts analyzed</span>
                   </div>
@@ -321,7 +322,7 @@ const Home: React.FC = () => {
                           Suggested Tech Stack
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {idea.tech_stack.map((tech, techIndex) => (
+                          {(idea.tech_stack || []).map((tech, techIndex) => (
                             <span key={techIndex} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium">
                               {tech}
                             </span>
@@ -329,7 +330,7 @@ const Home: React.FC = () => {
                         </div>
                       </div>
                       
-                      {idea.sources.length > 0 && (
+                      {(idea.sources && idea.sources.length > 0) && (
                         <div>
                           <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
                             <ExternalLink className="w-4 h-4 mr-1" />
