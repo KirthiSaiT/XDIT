@@ -10,11 +10,14 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.27.1",
+    "@google/generative-ai": "^0.21.0",
     "geist": "^1.4.2",
     "lucide-react": "^0.529.0",
     "next": "15.4.4",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "puppeteer": "^23.0.2",
+    "cheerio": "^1.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

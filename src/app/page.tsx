@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus } from 'lucide-react'
+import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus, Loader2, ExternalLink, Clock, Zap } from 'lucide-react'
 import {
   SignedIn,
   SignedOut,
@@ -10,29 +10,113 @@ import {
   UserButton,
 } from '@clerk/nextjs'
 
+interface ProjectIdea {
+  idea: string
+  description: string
+  market_need: string
+  tech_stack: string[]
+  difficulty: 'Easy' | 'Medium' | 'Hard'
+  estimated_time: string
+  sources: string[]
+}
+
+interface APIResponse {
+  success: boolean
+  data: {
+    keywords: string[]
+    projectIdeas: ProjectIdea[]
+    sources: {
+      reddit: number
+      x: number
+    }
+  }
+  error?: string
+}
+
 const Home: React.FC = () => {
   const [inputValue, setInputValue] = useState<string>('')
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [projectIdeas, setProjectIdeas] = useState<ProjectIdea[]>([])
+  const [keywords, setKeywords] = useState<string[]>([])
+  const [sourcesCount, setSourcesCount] = useState<{ reddit: number; x: number } | null>(null)
+  const [error, setError] = useState<string>('')
+  const [hasSearched, setHasSearched] = useState<boolean>(false)
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log('Submitted Concept:', inputValue)
+    
+    if (!inputValue.trim()) {
+      setError('Please enter a concept to generate ideas')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+    setHasSearched(true)
+
+    try {
+      // Call Python backend instead of Node.js API
+      const response = await fetch('http://127.0.0.1:8000/api/generate-ideas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt: inputValue.trim() }),
+      })
+
+      const data: APIResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate ideas')
+      }
+
+      if (data.success) {
+        setProjectIdeas(data.data.projectIdeas)
+        setKeywords(data.data.keywords)
+        setSourcesCount(data.data.sources)
+      } else {
+        throw new Error('API returned unsuccessful response')
+      }
+
+    } catch (err) {
+      console.error('Error generating ideas:', err)
+      
+      // Check if it's a connection error
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        setError('Cannot connect to the Python backend. Please make sure it\'s running on http://127.0.0.1:8000')
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to generate ideas. Please try again.')
+      }
+      setProjectIdeas([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Easy': return 'text-green-600 bg-green-100'
+      case 'Medium': return 'text-yellow-600 bg-yellow-100'
+      case 'Hard': return 'text-red-600 bg-red-100'
+      default: return 'text-gray-600 bg-gray-100'
+    }
   }
 
   const features = [
     {
       icon: <Search className="w-7 h-7 text-white" />,
       title: 'Smart Market Insights',
-      desc: 'Access real-time market data to identify and validate untapped opportunities.',
+      desc: 'Access real-time market data from Reddit and X to identify untapped opportunities.',
     },
     {
       icon: <Lightbulb className="w-7 h-7 text-white" />,
-      title: 'Unique SaaS Ideas',
-      desc: 'Discover innovative and viable concepts tailored to specific niche industries.',
+      title: 'AI-Powered Ideas',
+      desc: 'Leverage Google Gemini 2.5 Pro to generate innovative, viable SaaS concepts.',
     },
     {
       icon: <Sparkles className="w-7 h-7 text-white" />,
-      title: 'Fast & Reliable',
-      desc: 'Get actionable project ideas in seconds with our powerful AI-driven engine.',
+      title: 'Python-Powered Backend',
+      desc: 'Fast and reliable data scraping with comprehensive project analysis.',
     },
   ]
 
@@ -59,7 +143,6 @@ const Home: React.FC = () => {
             </a>
           </nav>
           <div className="flex items-center">
-            {/* --- CLERK AUTHENTICATION --- */}
             <SignedOut>
               <div className="hidden sm:flex items-center space-x-4">
                 <SignInButton mode="modal">
@@ -78,7 +161,6 @@ const Home: React.FC = () => {
             <SignedIn>
               <UserButton afterSignOutUrl="/" />
             </SignedIn>
-            {/* --- END CLERK AUTHENTICATION --- */}
           </div>
         </div>
       </header>
@@ -89,7 +171,7 @@ const Home: React.FC = () => {
         <div className="text-center mb-20">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold mb-6">
             <Lightbulb className="w-5 h-5 mr-2" />
-            AI-Powered Project Discovery
+            Powered by Gemini 2.5 Pro & Python
           </div>
 
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
@@ -101,9 +183,9 @@ const Home: React.FC = () => {
           </h1>
 
           <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto">
-            Transform your concepts into innovative SaaS solutions. Our platform
-            analyzes market trends to generate unique, viable project ideas for
-            you.
+            Transform your concepts into innovative SaaS solutions. Our Python-powered platform
+            scrapes Reddit and X in real-time, then uses Google Gemini 2.5 Pro to generate 
+            unique, viable project ideas.
           </p>
         </div>
 
@@ -120,43 +202,189 @@ const Home: React.FC = () => {
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
                     type="text"
-                    placeholder="Enter a concept: HR automation, crypto, fitness..."
+                    placeholder="Enter a concept: healthcare automation, fintech AI, remote work tools..."
                     className="w-full pl-12 pr-4 py-4 bg-transparent text-slate-800 placeholder-slate-400 text-base focus:outline-none"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
+                    disabled={isLoading}
                   />
                 </div>
                 <button
                   type="submit"
-                  className="px-5 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                  disabled={isLoading || !inputValue.trim()}
+                  className="px-5 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span>Generate Ideas</span>
-                  <ArrowRight className="w-5 h-5" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Generate Ideas</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           </form>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              <strong>Error:</strong> {error}
+              {error.includes('Python backend') && (
+                <div className="mt-2 text-xs text-red-500">
+                  To start the Python backend, run: <code className="bg-red-100 px-1 rounded">cd python_backend && python main.py</code>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Features Section */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {features.map((feature, idx) => (
-            <div
-              key={idx}
-              className="p-8 bg-white rounded-2xl border border-slate-100 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-in-out text-center"
-            >
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/30">
-                {feature.icon}
+        {/* Results Section */}
+        {hasSearched && (
+          <div className="mb-16">
+            {/* Keywords and Sources Info */}
+            {keywords.length > 0 && (
+              <div className="mb-8 p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex flex-wrap items-center gap-4 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-5 h-5 text-blue-600" />
+                    <span className="font-semibold text-slate-900">AI-Extracted Keywords:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {keywords.map((keyword, index) => (
+                      <span key={index} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {sourcesCount && (
+                  <div className="flex items-center space-x-6 text-sm text-slate-600">
+                    <span>🐍 Powered by Python Backend</span>
+                    <span>📊 {sourcesCount.reddit} Reddit posts analyzed</span>
+                    <span>🐦 {sourcesCount.x} X posts analyzed</span>
+                  </div>
+                )}
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-slate-500 text-sm leading-relaxed">
-                {feature.desc}
-              </p>
-            </div>
-          ))}
-        </div>
+            )}
+
+            {/* Project Ideas */}
+            {projectIdeas.length > 0 ? (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                  <Lightbulb className="w-6 h-6 mr-2 text-blue-600" />
+                  AI-Generated Project Ideas
+                </h2>
+                {projectIdeas.map((idea, index) => (
+                  <div key={index} className="bg-white rounded-xl border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <h3 className="text-xl font-bold text-slate-900 flex-1 pr-4">
+                          {idea.idea}
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(idea.difficulty)}`}>
+                            {idea.difficulty}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <p className="text-slate-600 mb-4 leading-relaxed">
+                        {idea.description}
+                      </p>
+                      
+                      <div className="grid md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                          <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
+                            <Search className="w-4 h-4 mr-1" />
+                            Market Need
+                          </h4>
+                          <p className="text-sm text-slate-600">{idea.market_need}</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
+                            <Clock className="w-4 h-4 mr-1" />
+                            Estimated Time
+                          </h4>
+                          <p className="text-sm text-slate-600">{idea.estimated_time}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
+                          <Zap className="w-4 h-4 mr-1" />
+                          Suggested Tech Stack
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {idea.tech_stack.map((tech, techIndex) => (
+                            <span key={techIndex} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium">
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {idea.sources.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
+                            <ExternalLink className="w-4 h-4 mr-1" />
+                            Market Research Sources
+                          </h4>
+                          <div className="space-y-1">
+                            {idea.sources.slice(0, 3).map((source, sourceIndex) => (
+                              <a
+                                key={sourceIndex}
+                                href={source}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-blue-600 hover:text-blue-700 hover:underline block"
+                              >
+                                {source.length > 80 ? source.substring(0, 80) + '...' : source}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : isLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+                <p className="text-slate-600">Scraping Reddit & X, analyzing with Gemini 2.5 Pro...</p>
+                <p className="text-sm text-slate-500 mt-2">This may take 30-60 seconds for comprehensive analysis</p>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* Features Section */}
+        {!hasSearched && (
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, idx) => (
+              <div
+                key={idx}
+                className="p-8 bg-white rounded-2xl border border-slate-100 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 ease-in-out text-center"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-500/30">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-slate-500 text-sm leading-relaxed">
+                  {feature.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Footer */}
