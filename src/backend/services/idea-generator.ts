@@ -38,7 +38,6 @@ export async function generateProjectIdeas(
   xData: XPost[]
 ): Promise<ProjectIdea[]> {
   try {
-    // First, get AI-generated ideas based on scraped data
     const aiIdeas = await analyzeScrapedData(prompt, keywords, redditData, xData)
     
     // Enhance the ideas with additional context and structure
@@ -76,7 +75,7 @@ async function enhanceIdea(
     const { difficulty, estimatedTime } = assessComplexity(idea, techStack)
     
     // Find relevant sources
-    const sources = findRelevantSources(redditData, xData, keywords).slice(0, 3)
+    const sources = findRelevantSources(idea, redditData, xData);
     
     return {
       idea: idea.trim(),
@@ -217,26 +216,28 @@ function generateDescription(idea: string, keywords: string[]): string {
   }
 }
 
-function findRelevantSources(redditData: RedditPost[], xData: XPost[], keywords: string[]): Array<{ url?: string, title?: string }> {
-  const sources: Array<{ url?: string, title?: string }> = []
-  
-  // Add high-scoring Reddit posts
-  redditData
-    .filter(post => post.score > 10)
-    .slice(0, 2)
-    .forEach(post => {
-      sources.push({ url: post.url, title: post.title })
-    })
-  
-  // Add high-engagement X posts
-  xData
-    .filter(post => post.likes > 5)
-    .slice(0, 2)
-    .forEach(post => {
-      sources.push({ url: post.url, title: post.content.substring(0, 50) + '...' })
-    })
-  
-  return sources
+function findRelevantSources(idea: string, redditData: RedditPost[], xData: XPost[]): Array<{ url?: string, title?: string }> {
+  const allData = [...redditData, ...xData];
+  const ideaWords = idea.toLowerCase().split(/\s+/);
+
+  const scoredSources = allData.map(post => {
+    const title = 'title' in post ? post.title : post.content;
+    const contentWords = title.toLowerCase().split(/\s+/);
+    const score = ideaWords.reduce((acc, word) => {
+      return acc + (contentWords.includes(word) ? 1 : 0);
+    }, 0);
+    return { ...post, score };
+  });
+
+  scoredSources.sort((a, b) => b.score - a.score);
+
+  if (scoredSources.length > 0 && scoredSources[0].score > 0) {
+    return scoredSources.slice(0, 3).map(source => {
+      return { url: source.url, title: 'title' in source ? source.title : source.content.substring(0, 50) + '...' };
+    });
+  }
+
+  return [];
 }
 
 function generateFallbackIdeas(prompt: string, keywords: string[]): ProjectIdea[] {
