@@ -187,9 +187,9 @@ User Request: "${prompt}"
 Focus Areas: ${keywords.join(', ')}
 
 Market Research Data:
-Reddit Discussions: ${redditData.slice(0, 10).map((post, i) => `${i+1}. ${post.title || post.content}`).join('\n')}
+Reddit Discussions: ${redditData.slice(0, 10).map((post, i) => `${i+1}. ${post.title || post.content}`).join('  ')}
 
-Twitter/X Discussions: ${xData.slice(0, 10).map((post, i) => `${i+1}. ${post.content}`).join('\n')}
+Twitter/X Discussions: ${xData.slice(0, 10).map((post, i) => `${i+1}. ${post.content}`).join('  ')}
 
 Requirements:
 1. Generate exactly 5 business/SaaS ideas
