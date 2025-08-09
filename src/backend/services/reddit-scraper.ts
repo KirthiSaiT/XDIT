@@ -66,7 +66,7 @@ const TOPIC_SUBREDDIT_MAP: Record<string, string[]> = {
   'social media': ['socialmedia', 'marketing', 'Instagram', 'Twitter', 'digital_marketing'],
   
   // Health and Fitness
-  'health': ['Health', 'fitness', 'nutrition', 'medicine', 'healthcare', 'mentalhealth'],
+  'health': ['Health', 'fitness', 'nutrition', 'medicine', 'healthcare', 'mentalhealth', 'healthcare'],
   'fitness': ['fitness', 'bodyweightfitness', 'gainit', 'loseit', 'Fitness', 'Health'],
   'mental health': ['mentalhealth', 'psychology', 'depression', 'anxiety', 'Health'],
   
@@ -81,6 +81,9 @@ const TOPIC_SUBREDDIT_MAP: Record<string, string[]> = {
   // Productivity and Tools
   'productivity': ['productivity', 'GetMotivated', 'selfimprovement', 'lifehacks', 'gtd'],
   'automation': ['automation', 'Python', 'programming', 'sysadmin', 'productivity'],
+
+  // Student Projects
+  'student project': ['AppIdeas', 'SomebodyMakeThis', 'SideProject', 'learnprogramming', 'webdev', 'gamedev', 'CrazyIdeas'],
   
   // Default categories
   'technology': ['technology', 'programming', 'webdev', 'startups', 'gadgets'],
@@ -117,11 +120,12 @@ function selectRelevantSubreddits(keywords: string[], originalPrompt: string): s
     { patterns: ['crypto', 'bitcoin', 'blockchain', 'defi', 'fintech'], topic: 'cryptocurrency' },
     { patterns: ['ecommerce', 'e-commerce', 'shopify', 'amazon'], topic: 'ecommerce' },
     { patterns: ['game', 'gaming', 'unity', 'gamedev'], topic: 'gaming' },
-    { patterns: ['health', 'fitness', 'wellness', 'medical'], topic: 'health' },
+    { patterns: ['health', 'fitness', 'wellness', 'medical', 'healthcare'], topic: 'health' },
     { patterns: ['education', 'learning', 'course', 'teach'], topic: 'education' },
     { patterns: ['productivity', 'automation', 'workflow'], topic: 'productivity' },
     { patterns: ['marketing', 'social media', 'seo'], topic: 'marketing' },
     { patterns: ['finance', 'invest', 'trading', 'money'], topic: 'fintech' },
+    { patterns: ['student', 'project', 'beginner', 'learn'], topic: 'student project' },
   ]
   
   for (const { patterns, topic } of promptAnalysis) {
@@ -236,25 +240,29 @@ export async function scrapeReddit(keywords: string[], originalPrompt: string = 
 // Helper function to get contextual search terms based on subreddit
 function getContextualSearchTerm(baseKeyword: string, subreddit: string): string {
   const contextMap: Record<string, string> = {
-    'MachineLearning': `${baseKeyword} project ideas`,
-    'artificial': `${baseKeyword} startup opportunities`,
-    'webdev': `${baseKeyword} web application`,
-    'startups': `${baseKeyword} business idea`,
-    'entrepreneur': `${baseKeyword} opportunity`,
-    'SaaS': `${baseKeyword} software solution`,
-    'androiddev': `${baseKeyword} mobile app`,
-    'fitness': `${baseKeyword} health platform`,
-    'fintech': `${baseKeyword} financial technology`,
-    'gamedev': `${baseKeyword} game concept`,
+    'MachineLearning': `${baseKeyword} project ideas for students`,
+    'artificial': `${baseKeyword} startup opportunities for students`,
+    'webdev': `${baseKeyword} web application ideas for students`,
+    'startups': `${baseKeyword} business idea for students`,
+    'entrepreneur': `${baseKeyword} opportunity for students`,
+    'SaaS': `${baseKeyword} software solution for students`,
+    'androiddev': `${baseKeyword} mobile app ideas for students`,
+    'fitness': `${baseKeyword} health platform for students`,
+    'fintech': `${baseKeyword} financial technology for students`,
+    'gamedev': `${baseKeyword} game concept for students`,
+    'learnprogramming': `${baseKeyword} project for beginners`,
+    'AppIdeas': `${baseKeyword} for students`,
+    'SideProject': `${baseKeyword} ideas for students`,
   }
   
-  return contextMap[subreddit] || `${baseKeyword} ideas`
+  return contextMap[subreddit] || `${baseKeyword} ideas for students`
 }
 
 // Enhanced search function for individual subreddits
 async function searchSubreddit(subreddit: string, searchTerm: string): Promise<RedditPost[]> {
   try {
-    const searchQuery = encodeURIComponent(searchTerm)
+    const studentSearchTerm = searchTerm.includes("for students") ? searchTerm : `${searchTerm} for students`;
+    const searchQuery = encodeURIComponent(studentSearchTerm);
     const url = `https://www.reddit.com/r/${subreddit}/search.json?q=${searchQuery}&restrict_sr=1&sort=relevance&limit=8&t=month&raw_json=1`
     
     const response = await fetch(url, {
@@ -309,6 +317,13 @@ function calculateRelevanceScore(post: RedditPost, keywords: string[], prompt: s
     if (titleLower.includes(keywordLower)) score += 50
     if (contentLower.includes(keywordLower)) score += 25
   }
+
+  // Boost score for student-related keywords
+  const studentKeywords = ['student', 'project', 'beginner', 'learn', 'idea'];
+  for (const keyword of studentKeywords) {
+    if (titleLower.includes(keyword)) score += 50;
+    if (contentLower.includes(keyword)) score += 25;
+  }
   
   // Boost score for posts with high engagement
   score += (post.num_comments * 2)
@@ -318,7 +333,7 @@ function calculateRelevanceScore(post: RedditPost, keywords: string[], prompt: s
   if (post.created_utc > weekAgo) score += 20
   
   // Boost score for relevant subreddits
-  const relevantSubs = ['startups', 'entrepreneur', 'SaaS', 'indiehackers']
+  const relevantSubs = ['startups', 'entrepreneur', 'SaaS', 'indiehackers', 'AppIdeas', 'SideProject', 'learnprogramming']
   if (relevantSubs.includes(post.subreddit)) score += 30
   
   return score
