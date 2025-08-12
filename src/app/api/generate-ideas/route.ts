@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractKeywords } from '../../../backend/services/perplexity'
-import { scrapeReddit } from '../../../backend/services/reddit-scraper'
-import { scrapeX } from '../../../backend/services/x-scraper'
+
 import { generateProjectIdeas } from '../../../backend/services/idea-generator'
 
 export async function POST(request: NextRequest) {
@@ -42,35 +41,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 2: Scrape data from Reddit and X in parallel
-    console.log('🌐 Step 2: Starting data scraping...')
-    const [redditData, xData] = await Promise.allSettled([
-      scrapeReddit(keywords),
-      scrapeX(keywords)
-    ])
+    // Step 2: No scraping needed, Perplexity AI will handle web search internally
 
-    // Process scraping results
-    const redditContent = redditData.status === 'fulfilled' ? redditData.value : []
-    const xContent = xData.status === 'fulfilled' ? xData.value : []
-
-    console.log('✅ Data scraping completed:')
-    console.log(`   📊 Reddit posts: ${redditContent.length}`)
-    console.log(`   🐦 X posts: ${xContent.length}`)
-
-    if (redditData.status === 'rejected') {
-      console.warn('⚠️ Reddit scraping failed:', redditData.reason)
-    }
-
-    if (xData.status === 'rejected') {
-      console.warn('⚠️ X scraping failed:', xData.reason)
-    }
-
-    // Step 3: Generate project ideas based on scraped data
+    // Step 3: Generate project ideas based on AI analysis
     console.log('💡 Step 3: Generating project ideas...')
     let projectIdeas
     
     try {
-      projectIdeas = await generateProjectIdeas(prompt, keywords, redditContent, xContent)
+      projectIdeas = await generateProjectIdeas(prompt, keywords)
       console.log('✅ Project ideas generated successfully:', projectIdeas.length, 'ideas')
     } catch (ideaError) {
       console.error('❌ Project idea generation failed:', ideaError)
@@ -84,11 +62,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         keywords,
-        projectIdeas,
-        sources: {
-          reddit: redditContent.length,
-          x: xContent.length
-        }
+        projectIdeas
       }
     }
 

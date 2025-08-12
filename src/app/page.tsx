@@ -17,7 +17,6 @@ interface ProjectIdea {
   tech_stack: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard'
   estimated_time: string
-  sources: string[]
 }
 
 interface APIResponse {
@@ -25,10 +24,6 @@ interface APIResponse {
   data: {
     keywords: string[]
     projectIdeas: ProjectIdea[]
-    sources: {
-      reddit: number
-      x: number
-    }
   }
   error?: string
 }
@@ -38,7 +33,6 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [projectIdeas, setProjectIdeas] = useState<ProjectIdea[]>([])
   const [keywords, setKeywords] = useState<string[]>([])
-  const [sourcesCount, setSourcesCount] = useState<{ reddit: number; x: number } | null>(null)
   const [error, setError] = useState<string>('')
   const [hasSearched, setHasSearched] = useState<boolean>(false)
 
@@ -73,7 +67,6 @@ const Home: React.FC = () => {
       if (data.success) {
         setProjectIdeas(data.data.projectIdeas)
         setKeywords(data.data.keywords)
-        setSourcesCount(data.data.sources)
       } else {
         throw new Error('API returned unsuccessful response')
       }
@@ -111,7 +104,7 @@ const Home: React.FC = () => {
     {
       icon: <Lightbulb className="w-7 h-7 text-white" />,
       title: 'AI-Powered Ideas',
-      desc: 'Leverage Google Gemini 2.5 Pro to generate innovative, viable SaaS concepts.',
+      desc: 'Leverage Perplexity Sonar Pro to generate innovative, viable SaaS concepts.',
     },
     {
       icon: <Sparkles className="w-7 h-7 text-white" />,
@@ -172,7 +165,7 @@ const Home: React.FC = () => {
         <div className="text-center mb-20">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold mb-6">
             <Lightbulb className="w-5 h-5 mr-2" />
-            Powered by Gemini 1.5 Pro & Node.js
+            Powered by Perplexity Sonar Pro & Node.js
           </div>
 
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
@@ -185,8 +178,7 @@ const Home: React.FC = () => {
 
           <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto">
             Transform your concepts into innovative SaaS solutions. Our platform
-            scrapes Reddit and X in real-time, then uses Google Gemini 1.5 Pro to generate 
-            unique, viable project ideas.
+            uses Perplexity Sonar Pro to generate unique, viable project ideas by performing comprehensive web searches.
           </p>
         </div>
 
@@ -263,13 +255,7 @@ const Home: React.FC = () => {
                     ))}
                   </div>
                 </div>
-                {sourcesCount && (
-                  <div className="flex items-center space-x-6 text-sm text-slate-600">
-                    <span>🚀 Powered by Next.js</span>
-                    <span>📊 {sourcesCount.reddit} Reddit posts analyzed</span>
-                    <span>🐦 {sourcesCount.x} X posts analyzed</span>
-                  </div>
-                )}
+                
               </div>
             )}
 
@@ -330,27 +316,7 @@ const Home: React.FC = () => {
                         </div>
                       </div>
                       
-                      {(idea.sources && idea.sources.length > 0) && (
-                        <div>
-                          <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
-                            <ExternalLink className="w-4 h-4 mr-1" />
-                            Market Research Sources
-                          </h4>
-                          <div className="space-y-1">
-                            {idea.sources.slice(0, 3).map((source, sourceIndex) => (
-                              <a
-                                key={sourceIndex}
-                                href={source}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm text-blue-600 hover:text-blue-700 hover:underline block"
-                              >
-                                {source.length > 80 ? source.substring(0, 80) + '...' : source}
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      
                     </div>
                   </div>
                 ))}
@@ -358,7 +324,7 @@ const Home: React.FC = () => {
             ) : isLoading ? (
               <div className="text-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-                <p className="text-slate-600">Scraping Reddit & X, analyzing with Gemini 2.5 Pro...</p>
+                <p className="text-slate-600">Analyzing with Perplexity Sonar Pro...</p>
                 <p className="text-sm text-slate-500 mt-2">This may take 30-60 seconds for comprehensive analysis</p>
               </div>
             ) : null}

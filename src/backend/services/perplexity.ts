@@ -188,80 +188,91 @@ Return ONLY the keyword phrases, one per line, without numbers or bullets:`;
 
 export async function analyzeScrapedData(
   prompt: string,
-  keywords: string[],
-  redditData: any[],
-  xData: any[]
-): Promise<string[]> {
+  keywords: string[]
+): Promise<Array<{ idea: string; sources: string[] }>> {
   try {
-    console.log('🤖 Attempting AI analysis with Perplexity Sonar...');
+    console.log('🤖 Attempting AI analysis with Perplexity Sonar (Deep Research)...');
 
     return await retryWithBackoff(async () => {
-      const analysisPrompt = `You are a business idea generator. Based on the user's request and market research data, generate 5 specific, actionable SaaS/business ideas.
+      const analysisPrompt = `You are a business idea generator. Based on the user's request and by performing a comprehensive deep web search across platforms like LinkedIn, Reddit, X (Twitter), and public forums, generate 5 specific, actionable SaaS/business ideas.
+
+For each idea, provide a brief description and include 2-3 relevant source URLs that support the market need or concept. If no direct source is found, provide a relevant general industry trend link.
 
 User Request: "${prompt}"
 Focus Areas: ${keywords.join(', ')}
 
-Market Research Data:
-Reddit Discussions: ${redditData.slice(0, 10).map((post, i) => `${i+1}. ${post.title || post.content}`).join('  ')}
-
-Twitter/X Discussions: ${xData.slice(0, 10).map((post, i) => `${i+1}. ${post.content}`).join('  ')}
-
 Requirements:
-1. Generate exactly 5 business/SaaS ideas
-2. Each idea should be specific and actionable
-3. Address real problems mentioned in the research data
-4. Be relevant to the focus areas: ${keywords.join(', ')}
-5. Include a brief description of the solution
+1. Generate exactly 5 business/SaaS ideas.
+2. Each idea should be specific and actionable.
+3. Address real problems identified through your deep web search.
+4. Be relevant to the focus areas: ${keywords.join(', ')}.
+5. Include a brief description of the solution.
+6. For each idea, provide 2-3 relevant source URLs on separate lines after the description. If no direct source, provide a general industry trend link.
 
-Format each idea as: "Idea Name: Brief description of what it does and the problem it solves"
+Format each idea as:
+Idea Name: Brief description of what it does and the problem it solves
+Source: [URL1]
+Source: [URL2]
+Source: [URL3]
 
 Ideas:`;
 
       const data = await makePerplexityRequest(analysisPrompt);
       const text = data.choices[0].message.content.trim();
 
-      // Parse ideas from the response
-      const ideas = text
-        .split('\n')
-        .map((idea: string) => idea.trim())
-        .filter((idea: string) => idea.length > 10) // Filter out very short lines
-        .map((idea: string) => idea.replace(/^\d+\.?\s*/, '')) // Remove numbering
-        .slice(0, 5); // Ensure we only return 5 ideas
+      const ideasWithSources: Array<{ idea: string; sources: string[] }> = [];
+      const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
-      if (ideas.length === 0) {
+      let currentIdea: { idea: string; sources: string[] } | null = null;
+
+      for (const line of lines) {
+        if (line.startsWith('Idea Name:')) {
+          if (currentIdea) {
+            ideasWithSources.push(currentIdea);
+          }
+          currentIdea = { idea: line.replace('Idea Name:', '').trim(), sources: [] };
+        } else if (line.startsWith('Source:') && currentIdea) {
+          const url = line.replace('Source:', '').trim();
+          if (url) {
+            currentIdea.sources.push(url);
+          }
+        } else if (currentIdea) {
+          // This is part of the description
+          currentIdea.idea += ' ' + line;
+        }
+      }
+      if (currentIdea) {
+        ideasWithSources.push(currentIdea);
+      }
+
+      if (ideasWithSources.length === 0) {
         throw new Error('No ideas generated from AI response');
       }
 
-      console.log('✅ AI idea generation successful:', ideas.length, 'ideas');
-      return ideas;
+      console.log('✅ AI idea generation successful:', ideasWithSources.length, 'ideas');
+      return ideasWithSources.slice(0, 5); // Ensure we only return 5 ideas
     });
   } catch (error: any) {
     console.warn('⚠️ AI idea generation failed, using enhanced fallback method:', error.message);
 
     // Enhanced fallback idea generation
-    const fallbackIdeas = generateEnhancedFallbackIdeas(prompt, keywords, redditData, xData);
+    const fallbackIdeas = generateEnhancedFallbackIdeas(prompt, keywords);
     console.log('🔄 Enhanced fallback ideas generated:', fallbackIdeas.length, 'ideas');
 
-    return fallbackIdeas;
+    return fallbackIdeas.map(idea => ({ idea, sources: [] }));
   }
 }
 
 // Enhanced fallback idea generation with better context understanding
 function generateEnhancedFallbackIdeas(
   prompt: string,
-  keywords: string[],
-  redditData: any[],
-  xData: any[]
+  keywords: string[]
 ): string[] {
   const primaryKeyword = keywords[0] || 'business solution';
   const secondaryKeyword = keywords[1] || 'automation tool';
 
-  // Extract problems from scraped data
-  const allContent = [
-    ...redditData.slice(0, 5).map(post => post.title || post.content || ''),
-    ...xData.slice(0, 5).map(post => post.content || '')
-  ].filter(content => content.length > 10);
-
+  // No scraped content to extract problems from, as we are relying on Perplexity for that
+  
   // Generate contextual ideas based on the primary keyword domain
   let templates: string[] = [];
 
@@ -292,13 +303,7 @@ function generateEnhancedFallbackIdeas(
     ];
   }
 
-  // If we have scraped content, try to incorporate real problems
-  if (allContent.length > 0) {
-    const problem = allContent[0].substring(0, 150).replace(/[^WSZXYZ[\]^_`abcdefghijklmnopqrstuvwxyz]/g, ' ').trim();
-    if (problem.length > 20) {
-      templates[0] = `Problem Solver for "${problem}...": A ${primaryKeyword} solution that directly addresses this common issue in the ${secondaryKeyword} space.`;
-    }
-  }
+  
 
   return templates;
 }
