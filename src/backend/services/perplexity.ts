@@ -1,38 +1,59 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { env } from '../config/environment';
 
-if (!process.env.GOOGLE_GEMINI_API_KEY) {
-  throw new Error('GOOGLE_GEMINI_API_KEY environment variable is required')
+if (!env.perplexity.apiKey) {
+  throw new Error('PERPLEXITY_API_KEY environment variable is required');
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY)
+const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 
 // Retry function with exponential backoff
 async function retryWithBackoff<T>(
-  fn: () => Promise<T>, 
-  maxRetries: number = 3, 
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
   baseDelay: number = 1000
 ): Promise<T> {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      return await fn()
+      return await fn();
     } catch (error: any) {
-      if (i === maxRetries - 1) throw error
-      
+      if (i === maxRetries - 1) throw error;
+
       if (error.message?.includes('429') || error.message?.includes('quota')) {
-        const delay = baseDelay * Math.pow(2, i) + Math.random() * 1000
-        console.log(`⏳ Rate limited, retrying in ${Math.round(delay)}ms... (attempt ${i + 1}/${maxRetries})`)
-        await new Promise(resolve => setTimeout(resolve, delay))
+        const delay = baseDelay * Math.pow(2, i) + Math.random() * 1000;
+        console.log(`⏳ Rate limited, retrying in ${Math.round(delay)}ms... (attempt ${i + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
       } else {
-        throw error // Don't retry non-quota errors
+        throw error; // Don't retry non-quota errors
       }
     }
   }
-  throw new Error('Max retries exceeded')
+  throw new Error('Max retries exceeded');
+}
+
+async function makePerplexityRequest(prompt: string): Promise<any> {
+  const response = await fetch(PERPLEXITY_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${env.perplexity.apiKey}`
+    },
+    body: JSON.stringify({
+      model: 'sonar-pro',
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Perplexity API request failed with status ${response.status}: ${errorBody}`);
+  }
+
+  return response.json();
 }
 
 // Enhanced fallback keyword extraction with better context understanding
 function extractKeywordsFromText(prompt: string): string[] {
-  // Remove generic request words but keep domain-specific terms
+    // Remove generic request words but keep domain-specific terms
   const stopWords = new Set([
     'give', 'me', 'some', 'few', 'ideas', 'on', 'how', 'to', 'what', 'are',
     'the', 'a', 'an', 'and', 'or', 'but', 'in', 'at', 'for', 'of', 'with', 'by',
@@ -72,7 +93,7 @@ function extractKeywordsFromText(prompt: string): string[] {
   }
   
   // Extract compound phrases (2-3 words) that are likely meaningful
-  const words = text.replace(/[^\w\s]/g, ' ').split(/\s+/)
+  const words = text.replace(/[^WSZXYZ[\]^_`abcdefghijklmnopqrstuvwxyz]/g, ' ').split(/\s+/)
   const phrases: string[] = []
   
   for (let i = 0; i < words.length - 1; i++) {
@@ -113,12 +134,10 @@ function extractKeywordsFromText(prompt: string): string[] {
 
 export async function extractKeywords(prompt: string): Promise<string[]> {
   try {
-    console.log('🔍 Attempting enhanced keyword extraction with Gemini Pro...')
-    
+    console.log('🔍 Attempting enhanced keyword extraction with Perplexity Sonar...');
+
     return await retryWithBackoff(async () => {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
-      
-      const keywordExtractionPrompt = `You are a keyword extraction expert. Your task is to understand what the user is really asking for and extract the CORE TOPIC and DOMAIN they're interested in, NOT the request words.
+      const perplexityPrompt = `You are a keyword extraction expert. Your task is to understand what the user is really asking for and extract the CORE TOPIC and DOMAIN they're interested in, NOT the request words.
 
 IGNORE these request words: "give me", "ideas", "some", "few", "what are", "how to", "can you"
 FOCUS on the actual SUBJECT MATTER and DOMAIN.
@@ -137,35 +156,33 @@ Extract 2-3 keyword phrases that represent the CORE DOMAIN and TOPIC the user wa
 2. The specific area or niche
 3. The target audience (if mentioned)
 
-Return ONLY the keyword phrases, one per line, without numbers or bullets:`
+Return ONLY the keyword phrases, one per line, without numbers or bullets:`;
 
-      const result = await model.generateContent(keywordExtractionPrompt)
-      const response = await result.response
-      const text = response.text().trim()
-      
+      const data = await makePerplexityRequest(perplexityPrompt);
+      const text = data.choices[0].message.content.trim();
+
       // Parse keywords from the response
       const keywords = text
         .split('\n')
         .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0 && !line.match(/^\d+\.|\-|\*/)) // Remove numbered/bulleted items
-        .slice(0, 3) // Take top 3
-      
+        .filter((line: string) => line.length > 0 && !line.match(/^\d+\.|-|•/)) // Remove numbered/bulleted items
+        .slice(0, 3); // Take top 3
+
       if (keywords.length === 0) {
-        throw new Error('No keywords extracted from AI response')
+        throw new Error('No keywords extracted from AI response');
       }
-      
-      console.log('✅ AI keyword extraction successful:', keywords)
-      return keywords
-    })
-    
+
+      console.log('✅ AI keyword extraction successful:', keywords);
+      return keywords;
+    });
   } catch (error: any) {
-    console.warn('⚠️ AI keyword extraction failed, using enhanced fallback method:', error.message)
-    
+    console.warn('⚠️ AI keyword extraction failed, using enhanced fallback method:', error.message);
+
     // Use enhanced fallback method
-    const fallbackKeywords = extractKeywordsFromText(prompt)
-    console.log('🔄 Enhanced fallback keywords extracted:', fallbackKeywords)
-    
-    return fallbackKeywords.length > 0 ? fallbackKeywords : ['business opportunities', 'market solutions']
+    const fallbackKeywords = extractKeywordsFromText(prompt);
+    console.log('🔄 Enhanced fallback keywords extracted:', fallbackKeywords);
+
+    return fallbackKeywords.length > 0 ? fallbackKeywords : ['business opportunities', 'market solutions'];
   }
 }
 
@@ -176,11 +193,9 @@ export async function analyzeScrapedData(
   xData: any[]
 ): Promise<string[]> {
   try {
-    console.log('🤖 Attempting AI analysis with Gemini Pro...')
-    
+    console.log('🤖 Attempting AI analysis with Perplexity Sonar...');
+
     return await retryWithBackoff(async () => {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' })
-      
       const analysisPrompt = `You are a business idea generator. Based on the user's request and market research data, generate 5 specific, actionable SaaS/business ideas.
 
 User Request: "${prompt}"
@@ -200,36 +215,34 @@ Requirements:
 
 Format each idea as: "Idea Name: Brief description of what it does and the problem it solves"
 
-Ideas:`
+Ideas:`;
 
-      const result = await model.generateContent(analysisPrompt)
-      const response = await result.response
-      const text = response.text().trim()
-      
+      const data = await makePerplexityRequest(analysisPrompt);
+      const text = data.choices[0].message.content.trim();
+
       // Parse ideas from the response
       const ideas = text
         .split('\n')
         .map((idea: string) => idea.trim())
         .filter((idea: string) => idea.length > 10) // Filter out very short lines
         .map((idea: string) => idea.replace(/^\d+\.?\s*/, '')) // Remove numbering
-        .slice(0, 5) // Ensure we only return 5 ideas
-      
+        .slice(0, 5); // Ensure we only return 5 ideas
+
       if (ideas.length === 0) {
-        throw new Error('No ideas generated from AI response')
+        throw new Error('No ideas generated from AI response');
       }
-      
-      console.log('✅ AI idea generation successful:', ideas.length, 'ideas')
-      return ideas
-    })
-    
+
+      console.log('✅ AI idea generation successful:', ideas.length, 'ideas');
+      return ideas;
+    });
   } catch (error: any) {
-    console.warn('⚠️ AI idea generation failed, using enhanced fallback method:', error.message)
-    
+    console.warn('⚠️ AI idea generation failed, using enhanced fallback method:', error.message);
+
     // Enhanced fallback idea generation
-    const fallbackIdeas = generateEnhancedFallbackIdeas(prompt, keywords, redditData, xData)
-    console.log('🔄 Enhanced fallback ideas generated:', fallbackIdeas.length, 'ideas')
-    
-    return fallbackIdeas
+    const fallbackIdeas = generateEnhancedFallbackIdeas(prompt, keywords, redditData, xData);
+    console.log('🔄 Enhanced fallback ideas generated:', fallbackIdeas.length, 'ideas');
+
+    return fallbackIdeas;
   }
 }
 
@@ -240,34 +253,34 @@ function generateEnhancedFallbackIdeas(
   redditData: any[],
   xData: any[]
 ): string[] {
-  const primaryKeyword = keywords[0] || 'business solution'
-  const secondaryKeyword = keywords[1] || 'automation tool'
-  
+  const primaryKeyword = keywords[0] || 'business solution';
+  const secondaryKeyword = keywords[1] || 'automation tool';
+
   // Extract problems from scraped data
   const allContent = [
     ...redditData.slice(0, 5).map(post => post.title || post.content || ''),
     ...xData.slice(0, 5).map(post => post.content || '')
-  ].filter(content => content.length > 10)
-  
+  ].filter(content => content.length > 10);
+
   // Generate contextual ideas based on the primary keyword domain
-  let templates: string[] = []
-  
+  let templates: string[] = [];
+
   if (primaryKeyword.includes('startup') || primaryKeyword.includes('business')) {
     templates = [
-      `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Planning Platform: A comprehensive tool that helps entrepreneurs validate ideas, create business plans, and track progress with built-in market research features.`,
+      `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Planning Platform: A comprehensive tool that helps entrepreneurs validate ideas, create business plans, and track progress with built-in market research features.`, 
       `${secondaryKeyword.charAt(0).toUpperCase() + secondaryKeyword.slice(1)} Marketplace: Connect ${primaryKeyword} founders with essential services, mentors, and resources needed for ${secondaryKeyword}.`,
       `AI-Powered ${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Assistant: Intelligent platform that provides personalized advice, market insights, and strategic guidance for ${secondaryKeyword}.`,
       `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Community Hub: Social platform where entrepreneurs can collaborate, share experiences, and get feedback on their ${secondaryKeyword} ideas.`,
       `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Analytics Dashboard: Track key metrics, market trends, and performance indicators for ${secondaryKeyword} success.`
-    ]
+    ];
   } else if (primaryKeyword.includes('web development') || primaryKeyword.includes('development')) {
     templates = [
-      `No-Code Website Builder for ${primaryKeyword}: Drag-and-drop platform specifically designed for ${secondaryKeyword} with industry-specific templates.`,
+      `No-Code Website Builder for ${primaryKeyword}: Drag-and-drop platform specifically designed for ${secondaryKeyword} with industry-specific templates.`, 
       `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Learning Platform: Interactive coding tutorials and project-based learning for ${secondaryKeyword}.`,
       `Code Review and Collaboration Tool: Platform for ${primaryKeyword} teams to review code, share feedback, and collaborate on ${secondaryKeyword} projects.`,
       `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Portfolio Generator: Automated tool that creates professional portfolios for ${secondaryKeyword} developers.`,
       `Bug Tracking and Project Management: Specialized tool for ${primaryKeyword} projects with integrated ${secondaryKeyword} workflows.`
-    ]
+    ];
   } else {
     // Generic templates that work for any domain
     templates = [
@@ -276,16 +289,16 @@ function generateEnhancedFallbackIdeas(
       `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Analytics Dashboard: Real-time insights and analytics for ${secondaryKeyword} performance tracking.`,
       `Collaborative ${primaryKeyword} Workspace: Team-based platform for managing ${secondaryKeyword} projects and communication.`,
       `${primaryKeyword.charAt(0).toUpperCase() + primaryKeyword.slice(1)} Marketplace: Connect service providers with businesses needing ${secondaryKeyword} solutions.`
-    ]
+    ];
   }
-  
+
   // If we have scraped content, try to incorporate real problems
   if (allContent.length > 0) {
-    const problem = allContent[0].substring(0, 150).replace(/[^\w\s]/g, ' ').trim()
+    const problem = allContent[0].substring(0, 150).replace(/[^WSZXYZ[\]^_`abcdefghijklmnopqrstuvwxyz]/g, ' ').trim();
     if (problem.length > 20) {
-      templates[0] = `Problem Solver for "${problem}...": A ${primaryKeyword} solution that directly addresses this common issue in the ${secondaryKeyword} space.`
+      templates[0] = `Problem Solver for "${problem}...": A ${primaryKeyword} solution that directly addresses this common issue in the ${secondaryKeyword} space.`;
     }
   }
-  
-  return templates
+
+  return templates;
 }

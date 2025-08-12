@@ -1,4 +1,4 @@
-import { analyzeScrapedData } from './gemini'
+import { analyzeScrapedData } from './perplexity'
 
 interface RedditPost {
   title: string

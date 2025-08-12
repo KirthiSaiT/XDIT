@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { extractKeywords } from '../../../backend/services/gemini'
+import { extractKeywords } from '../../../backend/services/perplexity'
 import { scrapeReddit } from '../../../backend/services/reddit-scraper'
 import { scrapeX } from '../../../backend/services/x-scraper'
 import { generateProjectIdeas } from '../../../backend/services/idea-generator'

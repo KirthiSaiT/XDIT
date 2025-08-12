@@ -1,5 +1,5 @@
 interface EnvironmentConfig {
-  gemini: {
+  perplexity: {
     apiKey: string
   }
   twitter: {
@@ -21,8 +21,8 @@ interface EnvironmentConfig {
 
 function validateEnvironment(): EnvironmentConfig {
   const config: EnvironmentConfig = {
-    gemini: {
-      apiKey: process.env.GOOGLE_GEMINI_API_KEY || ''
+    perplexity: {
+      apiKey: process.env.PERPLEXITY_API_KEY || ''
     },
     twitter: {
       bearerToken: process.env.TWITTER_BEARER_TOKEN,
@@ -44,8 +44,8 @@ function validateEnvironment(): EnvironmentConfig {
   // Validate required environment variables
   const missingVars: string[] = []
 
-  if (!config.gemini.apiKey) {
-    missingVars.push('GOOGLE_GEMINI_API_KEY')
+  if (!config.perplexity.apiKey) {
+    missingVars.push('PERPLEXITY_API_KEY')
   }
 
   if (!config.clerk.publishableKey) {
