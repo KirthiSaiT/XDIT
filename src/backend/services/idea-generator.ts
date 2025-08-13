@@ -1,25 +1,4 @@
-import { analyzeScrapedData } from './perplexity'
-
-interface RedditPost {
-  title: string
-  content: string
-  url: string
-  score: number
-  subreddit: string
-  created_utc: number
-  num_comments: number
-}
-
-interface XPost {
-  content: string
-  url: string
-  likes: number
-  retweets: number
-  replies: number
-  created_at: string
-  author: string
-  verified: boolean
-}
+import { PerplexityService } from './perplexity'
 
 interface ProjectIdea {
   idea: string
@@ -28,234 +7,151 @@ interface ProjectIdea {
   techStack: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard'
   estimatedTime: string
-  sources: string[]
+  sources: any[]
+}
+
+interface PerplexityMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
 }
 
 export async function generateProjectIdeas(
   prompt: string,
-  keywords: string[],
-  redditData: RedditPost[],
-  xData: XPost[]
+  keywords: string[]
 ): Promise<ProjectIdea[]> {
   try {
-    const aiIdeas = await analyzeScrapedData(prompt, keywords, redditData, xData)
+    console.log('Starting idea generation for prompt:', prompt);
+    console.log('Keywords:', keywords);
     
-    // Enhance the ideas with additional context and structure
-    const enhancedIdeas = await Promise.all(
-      aiIdeas.map(async (idea, index) => {
-        return await enhanceIdea(idea, keywords, redditData, xData, index)
-      })
-    )
+    // First, let's research the topic to understand current market trends
+    const researchPrompt = `Research the following topic: "${prompt}". 
     
-    return enhancedIdeas
+    Please provide:
+    1. Current market trends and opportunities
+    2. Existing solutions and their limitations
+    3. Potential gaps in the market
+    4. Recent developments in this field
+    
+    Focus on finding real, actionable insights that could lead to viable business opportunities.`;
+
+    const researchMessages: PerplexityMessage[] = [
+      { 
+        role: 'system', 
+        content: 'You are a market research expert specializing in identifying business opportunities and market gaps. Provide comprehensive, well-researched insights with specific examples and sources.' 
+      },
+      { 
+        role: 'user', 
+        content: researchPrompt 
+      }
+    ];
+
+    console.log('Calling Perplexity service for research...');
+    const researchResponse = await PerplexityService.chat(researchMessages, 'sonar-small-online');
+    
+    console.log('Research completed. Search results found:', researchResponse.search_results?.length || 0);
+    
+    // Now generate project ideas based on the research
+    const ideaGenerationPrompt = `Based on the research about "${prompt}", generate 3 innovative SaaS project ideas.
+
+    For each idea, provide:
+    - A clear, concise title
+    - A detailed description explaining the concept
+    - The specific market need or problem it solves
+    - Recommended technology stack (be specific with frameworks, languages, tools)
+    - Difficulty level (Easy: 1-2 months, Medium: 3-6 months, Hard: 6+ months)
+    - Estimated development time
+    
+    Make sure each idea is:
+    - Feasible with current technology
+    - Addresses a real market need
+    - Has clear monetization potential
+    - Is specific enough to be actionable
+    
+    Format your response as a JSON array with these exact keys:
+    [
+      {
+        "idea": "Project Title",
+        "description": "Detailed description",
+        "marketNeed": "Specific problem it solves",
+        "techStack": ["Technology1", "Technology2"],
+        "difficulty": "Easy|Medium|Hard",
+        "estimatedTime": "Time estimate"
+      }
+    ]`;
+
+    const ideaMessages: PerplexityMessage[] = [
+      { 
+        role: 'system', 
+        content: 'You are a product strategist and technical architect. Generate innovative, viable SaaS project ideas based on market research. Always respond with valid JSON.' 
+      },
+      { 
+        role: 'user', 
+        content: ideaGenerationPrompt 
+      }
+    ];
+
+    console.log('Generating project ideas...');
+    const ideaResponse = await PerplexityService.chat(ideaMessages, 'sonar-small-online');
+    
+    console.log('Ideas generated. Processing response...');
+
+    // Process the generated ideas
+    let ideas: ProjectIdea[] = [];
+    try {
+      const content = ideaResponse.choices[0].message.content;
+      console.log('Raw AI response:', content.substring(0, 200) + '...');
+      
+      // Try to extract JSON from the response
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        const jsonContent = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(jsonContent)) {
+          ideas = jsonContent.map(item => ({
+            idea: item.idea || item.Idea || '',
+            description: item.description || item.Description || '',
+            marketNeed: item.marketNeed || item['Market Need'] || item.market_need || '',
+            techStack: Array.isArray(item.techStack || item['Tech Stack'] || item.tech_stack) 
+              ? (item.techStack || item['Tech Stack'] || item.tech_stack) 
+              : [],
+            difficulty: item.difficulty || item.Difficulty || 'Medium',
+            estimatedTime: item.estimatedTime || item['Estimated Time'] || item.estimated_time || '',
+            sources: researchResponse.search_results || []
+          }));
+        }
+      }
+      
+      // If no valid JSON found, create a fallback idea
+      if (ideas.length === 0) {
+        console.warn('No valid JSON found in response, creating fallback idea');
+        ideas.push({
+          idea: `AI-Powered ${prompt} Solution`,
+          description: content || `An innovative solution for ${prompt} leveraging AI and modern technology.`,
+          marketNeed: `Addresses the growing need for ${prompt} solutions in the market.`,
+          techStack: ['React', 'Node.js', 'Python', 'AI/ML'],
+          difficulty: 'Medium',
+          estimatedTime: '3-6 months',
+          sources: researchResponse.search_results || []
+        });
+      }
+      
+    } catch (parseError) {
+      console.warn('Could not parse AI response as JSON, creating fallback idea:', parseError);
+      ideas.push({
+        idea: `Smart ${prompt} Platform`,
+        description: `A comprehensive platform that addresses ${prompt} challenges using cutting-edge technology.`,
+        marketNeed: `Solves critical problems in the ${prompt} industry.`,
+        techStack: ['React', 'Node.js', 'TypeScript', 'AI/ML'],
+        difficulty: 'Medium',
+        estimatedTime: '4-8 months',
+        sources: researchResponse.search_results || []
+      });
+    }
+
+    console.log(`Successfully generated ${ideas.length} project ideas`);
+    return ideas;
     
   } catch (error) {
-    console.error('Error generating project ideas:', error)
-    
-    // Fallback to basic ideas if AI fails
-    return generateFallbackIdeas(prompt, keywords)
+    console.error('Error generating project ideas:', error);
+    throw error;
   }
-}
-
-async function enhanceIdea(
-  idea: string,
-  keywords: string[],
-  redditData: RedditPost[],
-  xData: XPost[],
-  index: number
-): Promise<ProjectIdea> {
-  try {
-    // Extract market need from scraped content
-    const marketNeed = extractMarketNeed(redditData, xData, keywords)
-    
-    // Suggest tech stack based on keywords and trends
-    const techStack = suggestTechStack(keywords, idea)
-    
-    // Determine difficulty and time estimate
-    const { difficulty, estimatedTime } = assessComplexity(idea, techStack)
-    
-    // Find relevant sources
-    const sources = findRelevantSources(idea, redditData, xData);
-    
-    return {
-      idea: idea.trim(),
-      description: generateDescription(idea, keywords),
-      marketNeed,
-      techStack,
-      difficulty,
-      estimatedTime,
-      sources: sources.map(source => source.url || source.title || 'Reddit/X Discussion')
-    }
-    
-  } catch (error) {
-    console.error('Error enhancing idea:', error)
-    
-    // Return basic enhanced idea
-    return {
-      idea: idea.trim(),
-      description: `A ${keywords.join(', ')} solution that addresses modern business needs.`,
-      marketNeed: 'Based on current market discussions and trends',
-      techStack: ['React', 'Node.js', 'MongoDB'],
-      difficulty: 'Medium' as const,
-      estimatedTime: '2-3 months',
-      sources: []
-    }
-  }
-}
-
-function extractMarketNeed(redditData: RedditPost[], xData: XPost[], keywords: string[]): string {
-  // Analyze posts for pain points and needs
-  const painPoints: string[] = []
-  
-  // Look for common pain point indicators in Reddit posts
-  redditData.forEach(post => {
-    const text = (post.title + ' ' + post.content).toLowerCase()
-    
-    if (text.includes('problem') || text.includes('issue') || text.includes('struggle')) {
-      painPoints.push(post.title)
-    }
-    if (text.includes('need') || text.includes('want') || text.includes('looking for')) {
-      painPoints.push(post.title)
-    }
-  })
-  
-  // Look for needs in X posts
-  xData.forEach(post => {
-    const text = post.content.toLowerCase()
-    
-    if (text.includes('need') || text.includes('looking for') || text.includes('problem')) {
-      painPoints.push(post.content.substring(0, 100))
-    }
-  })
-  
-  if (painPoints.length > 0) {
-    return `Addresses common challenges including: ${painPoints.slice(0, 2).join(', ')}`
-  }
-  
-  return `Solves emerging needs in the ${keywords.join(', ')} space based on community discussions`
-}
-
-function suggestTechStack(keywords: string[], idea: string): string[] {
-  const baseStack = ['React', 'Node.js', 'TypeScript']
-  const additionalTech: string[] = []
-  
-  const ideaLower = idea.toLowerCase()
-  const keywordsLower = keywords.map(k => k.toLowerCase())
-  
-  // AI/ML related
-  if (keywordsLower.some(k => k.includes('ai') || k.includes('ml') || k.includes('machine learning'))) {
-    additionalTech.push('Python', 'TensorFlow', 'OpenAI API')
-  }
-  
-  // Mobile related
-  if (keywordsLower.some(k => k.includes('mobile') || k.includes('app'))) {
-    additionalTech.push('React Native', 'Expo')
-  }
-  
-  // Data/Analytics related
-  if (keywordsLower.some(k => k.includes('data') || k.includes('analytics') || k.includes('dashboard'))) {
-    additionalTech.push('D3.js', 'Chart.js', 'PostgreSQL')
-  }
-  
-  // Real-time features
-  if (ideaLower.includes('real-time') || ideaLower.includes('live') || ideaLower.includes('instant')) {
-    additionalTech.push('Socket.io', 'WebRTC')
-  }
-  
-  // Payment related
-  if (ideaLower.includes('payment') || ideaLower.includes('billing') || ideaLower.includes('subscription')) {
-    additionalTech.push('Stripe', 'PayPal API')
-  }
-  
-  // Authentication
-  if (ideaLower.includes('user') || ideaLower.includes('account') || ideaLower.includes('profile')) {
-    additionalTech.push('Auth0', 'JWT')
-  }
-  
-  return [...baseStack, ...additionalTech].slice(0, 6)
-}
-
-function assessComplexity(idea: string, techStack: string[]): { difficulty: 'Easy' | 'Medium' | 'Hard', estimatedTime: string } {
-  let complexityScore = 0
-  
-  const ideaLower = idea.toLowerCase()
-  
-  // Increase complexity for certain features
-  if (ideaLower.includes('ai') || ideaLower.includes('machine learning')) complexityScore += 3
-  if (ideaLower.includes('real-time') || ideaLower.includes('live')) complexityScore += 2
-  if (ideaLower.includes('mobile')) complexityScore += 2
-  if (ideaLower.includes('payment') || ideaLower.includes('billing')) complexityScore += 2
-  if (ideaLower.includes('integration') || ideaLower.includes('api')) complexityScore += 1
-  if (ideaLower.includes('analytics') || ideaLower.includes('dashboard')) complexityScore += 1
-  
-  // Factor in tech stack complexity
-  complexityScore += Math.floor(techStack.length / 2)
-  
-  if (complexityScore <= 2) {
-    return { difficulty: 'Easy', estimatedTime: '2-4 weeks' }
-  } else if (complexityScore <= 5) {
-    return { difficulty: 'Medium', estimatedTime: '1-3 months' }
-  } else {
-    return { difficulty: 'Hard', estimatedTime: '3-6 months' }
-  }
-}
-
-function generateDescription(idea: string, keywords: string[]): string {
-  const ideaLower = idea.toLowerCase()
-  
-  if (ideaLower.includes('platform')) {
-    return `A comprehensive platform that leverages ${keywords.join(', ')} to streamline operations and improve efficiency for businesses and individuals.`
-  } else if (ideaLower.includes('app') || ideaLower.includes('mobile')) {
-    return `A mobile-first application focusing on ${keywords.join(', ')} that provides users with intuitive tools and seamless experience.`
-  } else if (ideaLower.includes('dashboard') || ideaLower.includes('analytics')) {
-    return `An analytics-driven solution that helps users understand and optimize their ${keywords.join(', ')} performance through data visualization.`
-  } else if (ideaLower.includes('automation')) {
-    return `An automation tool that simplifies ${keywords.join(', ')} workflows, reducing manual work and increasing productivity.`
-  } else {
-    return `An innovative solution that addresses key challenges in the ${keywords.join(', ')} domain through modern technology and user-centric design.`
-  }
-}
-
-function findRelevantSources(idea: string, redditData: RedditPost[], xData: XPost[]): Array<{ url?: string, title?: string }> {
-  const allData = [...redditData, ...xData];
-  const ideaWords = idea.toLowerCase().split(/\s+/);
-
-  const scoredSources = allData.map(post => {
-    const title = 'title' in post ? post.title : post.content;
-    const contentWords = title.toLowerCase().split(/\s+/);
-    const score = ideaWords.reduce((acc, word) => {
-      return acc + (contentWords.includes(word) ? 1 : 0);
-    }, 0);
-    return { ...post, score };
-  });
-
-  scoredSources.sort((a, b) => b.score - a.score);
-
-  if (scoredSources.length > 0 && scoredSources[0].score > 0) {
-    return scoredSources.slice(0, 3).map(source => {
-      return { url: source.url, title: 'title' in source ? source.title : source.content.substring(0, 50) + '...' };
-    });
-  }
-
-  return [];
-}
-
-function generateFallbackIdeas(prompt: string, keywords: string[]): ProjectIdea[] {
-  const fallbackIdeas = [
-    `Build a ${keywords[0] || 'productivity'} management platform for small businesses`,
-    `Create an AI-powered ${keywords[1] || 'automation'} tool for ${keywords[0] || 'workflows'}`,
-    `Develop a mobile app for ${keywords[0] || 'professionals'} networking and collaboration`,
-    `Design a dashboard for ${keywords[0] || 'data'} analytics and insights`,
-    `Launch a marketplace connecting ${keywords[0] || 'service'} providers with customers`
-  ]
-  
-  return fallbackIdeas.map((idea, index) => ({
-    idea,
-    description: `A solution addressing needs in the ${keywords.join(', ')} space.`,
-    marketNeed: 'Based on general market trends and user feedback',
-    techStack: ['React', 'Node.js', 'MongoDB', 'TypeScript'],
-    difficulty: 'Medium' as const,
-    estimatedTime: '2-3 months',
-    sources: []
-  }))
 } 

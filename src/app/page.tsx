@@ -105,18 +105,18 @@ const Home: React.FC = () => {
   const features = [
     {
       icon: <Search className="w-7 h-7 text-white" />,
-      title: 'Smart Market Insights',
-      desc: 'Access real-time market data from Reddit and X to identify untapped opportunities.',
+      title: 'Real-Time Market Research',
+      desc: 'AI-powered web research to identify current market trends, opportunities, and gaps in real-time.',
     },
     {
       icon: <Lightbulb className="w-7 h-7 text-white" />,
-      title: 'AI-Powered Ideas',
-      desc: 'Leverage Google Gemini 2.5 Pro to generate innovative, viable SaaS concepts.',
+      title: 'Intelligent Idea Generation',
+      desc: 'Generate innovative, viable SaaS project ideas based on comprehensive market research and analysis.',
     },
     {
       icon: <Sparkles className="w-7 h-7 text-white" />,
-      title: 'Python-Powered Backend',
-      desc: 'Fast and reliable data scraping with comprehensive project analysis.',
+      title: 'Research-Backed Insights',
+      desc: 'Every idea comes with detailed research sources, market analysis, and technical specifications.',
     },
   ]
 
@@ -172,7 +172,7 @@ const Home: React.FC = () => {
         <div className="text-center mb-20">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold mb-6">
             <Lightbulb className="w-5 h-5 mr-2" />
-            Powered by Gemini 1.5 Pro & Node.js
+            Powered by Perplexity AI Sonar & Next.js
           </div>
 
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
@@ -184,9 +184,8 @@ const Home: React.FC = () => {
           </h1>
 
           <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto">
-            Transform your concepts into innovative SaaS solutions. Our platform
-            scrapes Reddit and X in real-time, then uses Google Gemini 1.5 Pro to generate 
-            unique, viable project ideas.
+            Transform your concepts into innovative SaaS solutions. Our AI-powered platform researches the web in real-time, 
+            analyzes market trends, and generates viable project ideas with detailed research sources and technical specifications.
           </p>
         </div>
 
@@ -358,8 +357,13 @@ const Home: React.FC = () => {
             ) : isLoading ? (
               <div className="text-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-                <p className="text-slate-600">Scraping Reddit & X, analyzing with Gemini 2.5 Pro...</p>
-                <p className="text-sm text-slate-500 mt-2">This may take 30-60 seconds for comprehensive analysis</p>
+                <p className="text-slate-600">Researching with Perplexity AI Sonar...</p>
+                <p className="text-sm text-slate-500 mt-2">This may take 1-2 minutes for comprehensive research and idea generation</p>
+                <div className="mt-4 space-y-2 text-xs text-slate-400">
+                  <p>🔍 Researching market trends and opportunities</p>
+                  <p>💡 Generating innovative project ideas</p>
+                  <p>📊 Analyzing market gaps and solutions</p>
+                </div>
               </div>
             ) : null}
           </div>

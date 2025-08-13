@@ -1,23 +1,22 @@
 # xxit - SaaS Idea Generator
 
-A Next.js web application that generates innovative SaaS project ideas using AI and real-time data scraping from Reddit and X (Twitter).
+A Next.js web application that generates innovative SaaS project ideas using Perplexity AI Sonar for real-time market research and intelligent idea generation.
 
 ## 🚀 Features
 
-- **AI-Powered Keyword Extraction**: Uses Google Gemini API to extract relevant keywords from user prompts
-- **Real-time Data Scraping**: Scrapes Reddit and X for market insights and trending discussions
-- **Intelligent Idea Generation**: Combines AI analysis with scraped data to generate unique SaaS ideas
+- **AI-Powered Market Research**: Uses Perplexity AI Sonar to research topics in real-time and identify market opportunities
+- **Intelligent Idea Generation**: Combines AI research with comprehensive analysis to generate unique SaaS ideas
 - **User Authentication**: Secure sign-in/sign-up with Clerk
 - **Modern UI**: Beautiful, responsive interface with Tailwind CSS
-- **Detailed Project Analysis**: Includes tech stack suggestions, difficulty assessment, and time estimates
+- **Detailed Project Analysis**: Includes tech stack suggestions, difficulty assessment, time estimates, and research sources
 
 ## 🛠️ Technology Stack
 
 - **Frontend**: Next.js 15.4.4, React 19, TypeScript
 - **Styling**: Tailwind CSS v4
 - **Authentication**: Clerk
-- **AI**: Google Gemini API
-- **Data Scraping**: Custom Reddit API integration, Twitter API v2
+- **AI**: Perplexity AI Sonar
+
 - **Icons**: Lucide React
 - **Fonts**: Geist Sans/Mono
 
@@ -26,9 +25,9 @@ A Next.js web application that generates innovative SaaS project ideas using AI 
 Before you begin, ensure you have:
 - Node.js 18+ installed
 - npm or yarn package manager
-- Google Gemini API key
+- Perplexity AI API key
 - Clerk account for authentication
-- (Optional) Twitter API v2 Bearer Token for enhanced X scraping
+
 
 ## 🔧 Installation
 
@@ -47,30 +46,21 @@ Before you begin, ensure you have:
    
    Create a `.env.local` file in the root directory:
    ```env
-   # Google Gemini API Configuration (Required)
-   GOOGLE_GEMINI_API_KEY=your_google_gemini_api_key_here
+   # Perplexity AI API Configuration (Required)
+   PERPLEXITY_API_KEY=your_perplexity_api_key_here
    
    # Clerk Authentication (Required)
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
    CLERK_SECRET_KEY=your_clerk_secret_key
    
-   # Twitter API Configuration (Optional - for enhanced X scraping)
-   TWITTER_BEARER_TOKEN=your_twitter_bearer_token_here
-   TWITTER_API_KEY=your_twitter_api_key_here
-   TWITTER_API_SECRET=your_twitter_api_secret_here
    
-   # Scraping Configuration (Optional)
-   REDDIT_REQUEST_DELAY=1000
-   X_REQUEST_DELAY=2000
-   MAX_REDDIT_POSTS=20
-   MAX_X_POSTS=15
    ```
 
 4. **Get your API keys**
 
-   - **Google Gemini API**: Go to [Google AI Studio](https://ai.google.dev/) and create an API key
+   - **Perplexity AI**: Go to [Perplexity AI](https://www.perplexity.ai/) and create an API key
    - **Clerk**: Sign up at [Clerk](https://clerk.com/) and create a new application
-   - **Twitter API** (Optional): Apply for access at [Twitter Developer Portal](https://developer.twitter.com/)
+   
 
 5. **Run the development server**
    ```bash
@@ -87,17 +77,17 @@ xxit/
 ├── src/
 │   ├── app/
 │   │   ├── api/
-│   │   │   └── generate-ideas/
-│   │   │       └── route.ts          # Main API endpoint
+│   │   │   ├── generate-ideas/
+│   │   │   │   └── route.ts          # Main API endpoint
+│   │   │   └── test-env/
+│   │   │       └── route.ts          # Environment test endpoint
 │   │   ├── page.tsx                  # Main UI component
 │   │   ├── layout.tsx                # Root layout with Clerk
 │   │   └── globals.css               # Global styles
 │   └── backend/
 │       ├── services/
-│       │   ├── gemini.ts            # Google Gemini integration
-│       │   ├── reddit-scraper.ts    # Reddit data scraping
-│       │   ├── x-scraper.ts         # X (Twitter) data scraping
-│       │   └── idea-generator.ts    # Project idea generation logic
+│       │   ├── perplexity.ts         # Perplexity AI integration
+│       │   └── idea-generator.ts     # Project idea generation logic
 │       └── config/
 │           └── environment.ts        # Environment configuration
 ├── public/                          # Static assets
@@ -128,31 +118,27 @@ Generates SaaS project ideas based on user input.
       {
         "idea": "Build an AI-powered patient triage system",
         "description": "A comprehensive platform that leverages AI, healthcare, automation...",
-        "marketNeed": "Addresses common challenges including: long wait times, staffing shortages",
-        "techStack": ["React", "Node.js", "TypeScript", "Python", "TensorFlow"],
+        "market_need": "Addresses common challenges including: long wait times, staffing shortages",
+        "tech_stack": ["React", "Node.js", "TypeScript", "Python", "TensorFlow"],
         "difficulty": "Hard",
-        "estimatedTime": "3-6 months",
-        "sources": ["https://reddit.com/r/healthcare/post123", "https://x.com/user/status456"]
+        "estimated_time": "3-6 months"
       }
-    ],
-    "sources": {
-      "reddit": 15,
-      "x": 8
-    }
+    ]
   }
 }
 ```
 
+### GET `/api/test-env`
+
+Tests the environment configuration and Perplexity AI connection.
+
 ## 🎯 How It Works
 
 1. **User Input**: User enters a concept (e.g., "healthcare automation")
-2. **Keyword Extraction**: Google Gemini API extracts relevant keywords
-3. **Data Scraping**: 
-   - Reddit: Searches relevant subreddits for discussions
-   - X: Searches for tweets and trends (with API or fallback method)
-4. **AI Analysis**: Gemini analyzes scraped data to identify market needs
-5. **Idea Generation**: Combines insights to generate structured project ideas
-6. **Enhancement**: Adds tech stack suggestions, difficulty assessment, and time estimates
+2. **Keyword Extraction**: Perplexity AI extracts relevant keywords from the prompt
+3. **Market Research**: Perplexity AI researches the topic in real-time to understand current trends
+4. **Idea Generation**: Based on research findings, generates structured project ideas with technical details
+5. **Research Sources**: Provides links to all sources used in the research process
 
 ## 🔒 Authentication
 
@@ -164,9 +150,8 @@ The app uses Clerk for authentication with:
 
 ## 🌐 Data Sources
 
-- **Reddit**: Public JSON API for posts and discussions
-- **X (Twitter)**: API v2 for tweets and trends (with fallback options)
-- **Google Gemini**: AI analysis and keyword extraction
+- **Perplexity AI Sonar**: Real-time web research and AI analysis
+- **Search Results**: Comprehensive web search results for each research topic
 
 ## 🚀 Deployment
 
@@ -197,7 +182,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Google Gemini AI](https://ai.google.dev/)
+- [Perplexity AI](https://www.perplexity.ai/)
 - [Clerk Authentication](https://clerk.com/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
 
@@ -206,8 +191,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Common Issues:**
 
 1. **API Key Errors**: Ensure all required environment variables are set in `.env.local`
-2. **Rate Limiting**: Reddit and X have rate limits - the app includes delays to handle this
-3. **CORS Issues**: The app uses server-side API routes to avoid CORS problems
-4. **Build Errors**: Run `npm install` to ensure all dependencies are installed
+2. **Connection Issues**: Test the `/api/test-env` endpoint to verify your Perplexity AI connection
+3. **Build Errors**: Run `npm install` to ensure all dependencies are installed
 
 For more help, check the console logs or open an issue on GitHub.

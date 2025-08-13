@@ -1,112 +1,64 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { extractKeywords } from '../../../backend/services/perplexity'
-import { scrapeReddit } from '../../../backend/services/reddit-scraper'
-import { scrapeX } from '../../../backend/services/x-scraper'
-import { generateProjectIdeas } from '../../../backend/services/idea-generator'
+import { NextResponse } from 'next/server'
+import { PerplexityService } from '@/backend/services/perplexity'
+import { generateProjectIdeas } from '@/backend/services/idea-generator'
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    console.log('=== API Request Started ===')
-    const { prompt } = await request.json()
-    
-    if (!prompt || typeof prompt !== 'string') {
-      console.log('Invalid prompt provided:', prompt)
-      return NextResponse.json(
-        { error: 'Invalid prompt provided' },
-        { status: 400 }
-      )
+    const { prompt, keywords } = await request.json()
+
+    if (!prompt) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Prompt is required' 
+      }, { status: 400 })
     }
 
-    console.log('✅ Valid prompt received:', prompt)
-
-    // Step 1: Extract keywords using Gemini API
-    console.log('🔍 Step 1: Extracting keywords using Gemini API...')
-    let keywords: string[] = []
+    console.log('Generating ideas for prompt:', prompt);
     
-    try {
-      keywords = await extractKeywords(prompt)
-      console.log('✅ Keywords extracted successfully:', keywords)
-    } catch (keywordError) {
-      console.error('❌ Keyword extraction failed:', keywordError)
-      return NextResponse.json(
-        { error: 'Failed to extract keywords. Please check your API key.' },
-        { status: 500 }
-      )
+    // Extract keywords if not provided
+    let extractedKeywords = keywords || [];
+    if (extractedKeywords.length === 0) {
+      console.log('Extracting keywords from prompt...');
+      extractedKeywords = await PerplexityService.extractKeywords(prompt);
+      console.log('Keywords extracted:', extractedKeywords);
     }
     
-    if (!keywords || keywords.length === 0) {
-      console.log('❌ No keywords extracted')
-      return NextResponse.json(
-        { error: 'No keywords could be extracted from your prompt' },
-        { status: 500 }
-      )
-    }
-
-    // Step 2: Scrape data from Reddit and X in parallel
-    console.log('🌐 Step 2: Starting data scraping...')
-    const [redditData, xData] = await Promise.allSettled([
-      scrapeReddit(keywords),
-      scrapeX(keywords)
-    ])
-
-    // Process scraping results
-    const redditContent = redditData.status === 'fulfilled' ? redditData.value : []
-    const xContent = xData.status === 'fulfilled' ? xData.value : []
-
-    console.log('✅ Data scraping completed:')
-    console.log(`   📊 Reddit posts: ${redditContent.length}`)
-    console.log(`   🐦 X posts: ${xContent.length}`)
-
-    if (redditData.status === 'rejected') {
-      console.warn('⚠️ Reddit scraping failed:', redditData.reason)
-    }
-
-    if (xData.status === 'rejected') {
-      console.warn('⚠️ X scraping failed:', xData.reason)
-    }
-
-    // Step 3: Generate project ideas based on scraped data
-    console.log('💡 Step 3: Generating project ideas...')
-    let projectIdeas
+    // Generate project ideas
+    const ideas = await generateProjectIdeas(prompt, extractedKeywords)
     
-    try {
-      projectIdeas = await generateProjectIdeas(prompt, keywords, redditContent, xContent)
-      console.log('✅ Project ideas generated successfully:', projectIdeas.length, 'ideas')
-    } catch (ideaError) {
-      console.error('❌ Project idea generation failed:', ideaError)
-      return NextResponse.json(
-        { error: 'Failed to generate project ideas. Please try again.' },
-        { status: 500 }
-      )
-    }
+    // Transform backend properties to match frontend interface
+    const transformedIdeas = ideas.map(idea => ({
+      idea: idea.idea,
+      description: idea.description,
+      market_need: idea.marketNeed,
+      tech_stack: idea.techStack,
+      difficulty: idea.difficulty,
+      estimated_time: idea.estimatedTime,
+      sources: idea.sources || []
+    }))
+    
+    // Extract keywords from the prompt and add any from research
+    const promptKeywords = prompt.toLowerCase().split(' ').filter((word: string) => word.length > 3);
+    const researchKeywords = ideas.flatMap(idea => 
+      idea.sources?.map((source: any) => source.title || source.url) || []
+    ).filter(Boolean);
+    
+    const allKeywords = [...new Set([...promptKeywords, ...researchKeywords])];
 
-    const response = {
+    console.log(`Generated ${transformedIdeas.length} ideas with ${allKeywords.length} keywords`);
+
+    return NextResponse.json({
       success: true,
       data: {
-        keywords,
-        projectIdeas,
-        sources: {
-          reddit: redditContent.length,
-          x: xContent.length
-        }
+        keywords: allKeywords,
+        projectIdeas: transformedIdeas
       }
-    }
-
-    console.log('🎉 API Request completed successfully!')
-    console.log('=== API Response ===')
-    
-    return NextResponse.json(response)
-
+    })
   } catch (error) {
-    console.error('💥 Fatal error in generate-ideas API:', error)
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace available')
-    
-    return NextResponse.json(
-      { 
-        error: 'Internal server error. Please check the console for details.',
-        details: process.env.NODE_ENV === 'development' ? String(error) : undefined
-      },
-      { status: 500 }
-    )
+    console.error('Error in generate-ideas API route:', error)
+    return NextResponse.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Internal Server Error' 
+    }, { status: 500 })
   }
 } 
