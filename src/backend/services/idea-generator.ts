@@ -1,10 +1,4 @@
-<<<<<<< HEAD
 import { PerplexityService } from './perplexity'
-=======
-import { analyzeScrapedData } from './perplexity'
-
-
->>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 
 interface ProjectIdea {
   idea: string
@@ -13,15 +7,12 @@ interface ProjectIdea {
   techStack: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard'
   estimatedTime: string
-<<<<<<< HEAD
   sources: any[]
 }
 
 interface PerplexityMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
-=======
->>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 }
 
 export async function generateProjectIdeas(
@@ -29,7 +20,7 @@ export async function generateProjectIdeas(
   keywords: string[]
 ): Promise<ProjectIdea[]> {
   try {
-<<<<<<< HEAD
+    console.log('Starting idea generation for prompt:', prompt);
     console.log('Starting idea generation for prompt:', prompt);
     console.log('Keywords:', keywords);
     
@@ -56,7 +47,7 @@ export async function generateProjectIdeas(
     ];
 
     console.log('Calling Perplexity service for research...');
-    const researchResponse = await PerplexityService.chat(researchMessages, 'sonar-small-online');
+    const researchResponse = await PerplexityService.chat(researchMessages, 'sonar');
     
     console.log('Research completed. Search results found:', researchResponse.search_results?.length || 0);
     
@@ -101,7 +92,7 @@ export async function generateProjectIdeas(
     ];
 
     console.log('Generating project ideas...');
-    const ideaResponse = await PerplexityService.chat(ideaMessages, 'sonar-small-online');
+    const ideaResponse = await PerplexityService.chat(ideaMessages, 'sonar');
     
     console.log('Ideas generated. Processing response...');
 
@@ -159,46 +150,9 @@ export async function generateProjectIdeas(
 
     console.log(`Successfully generated ${ideas.length} project ideas`);
     return ideas;
-=======
-    const aiIdeas = await analyzeScrapedData(prompt, keywords)
-    
-    return aiIdeas.map(idea => ({
-      idea: idea.split(':')[0].trim(),
-      description: idea.split(':').slice(1).join(':').trim(),
-      marketNeed: 'Identified through AI-powered web search',
-      techStack: ['React', 'Node.js', 'TypeScript'], // Default tech stack
-      difficulty: 'Medium',
-      estimatedTime: '2-3 months'
-    }))
->>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
     
   } catch (error) {
     console.error('Error generating project ideas:', error);
     throw error;
   }
-<<<<<<< HEAD
-=======
-}
-
-
-
-function generateFallbackIdeas(prompt: string, keywords: string[]): ProjectIdea[] {
-  const fallbackIdeas = [
-    `Build a ${keywords[0] || 'productivity'} management platform for small businesses`,
-    `Create an AI-powered ${keywords[1] || 'automation'} tool for ${keywords[0] || 'workflows'}`,
-    `Develop a mobile app for ${keywords[0] || 'professionals'} networking and collaboration`,
-    `Design a dashboard for ${keywords[0] || 'data'} analytics and insights`,
-    `Launch a marketplace connecting ${keywords[0] || 'service'} providers with customers`
-  ]
-  
-  return fallbackIdeas.map((idea, index) => ({
-    idea,
-    description: `A solution addressing needs in the ${keywords.join(', ')} space.`,
-    marketNeed: 'Based on general market trends and user feedback',
-    techStack: ['React', 'Node.js', 'MongoDB', 'TypeScript'],
-    difficulty: 'Medium' as const,
-    estimatedTime: '2-3 months',
-    sources: []
-  }))
->>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 } 
