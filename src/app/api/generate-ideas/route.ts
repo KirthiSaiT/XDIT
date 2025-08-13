@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 import { NextResponse } from 'next/server'
 import { PerplexityService } from '@/backend/services/perplexity'
 import { generateProjectIdeas } from '@/backend/services/idea-generator'
+=======
+import { NextRequest, NextResponse } from 'next/server'
+import { extractKeywords } from '../../../backend/services/perplexity'
+
+import { generateProjectIdeas } from '../../../backend/services/idea-generator'
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 
 export async function POST(request: Request) {
   try {
@@ -23,6 +30,7 @@ export async function POST(request: Request) {
       console.log('Keywords extracted:', extractedKeywords);
     }
     
+<<<<<<< HEAD
     // Generate project ideas
     const ideas = await generateProjectIdeas(prompt, extractedKeywords)
     
@@ -44,14 +52,45 @@ export async function POST(request: Request) {
     ).filter(Boolean);
     
     const allKeywords = [...new Set([...promptKeywords, ...researchKeywords])];
+=======
+    if (!keywords || keywords.length === 0) {
+      console.log('❌ No keywords extracted')
+      return NextResponse.json(
+        { error: 'No keywords could be extracted from your prompt' },
+        { status: 500 }
+      )
+    }
+
+    // Step 2: No scraping needed, Perplexity AI will handle web search internally
+
+    // Step 3: Generate project ideas based on AI analysis
+    console.log('💡 Step 3: Generating project ideas...')
+    let projectIdeas
+    
+    try {
+      projectIdeas = await generateProjectIdeas(prompt, keywords)
+      console.log('✅ Project ideas generated successfully:', projectIdeas.length, 'ideas')
+    } catch (ideaError) {
+      console.error('❌ Project idea generation failed:', ideaError)
+      return NextResponse.json(
+        { error: 'Failed to generate project ideas. Please try again.' },
+        { status: 500 }
+      )
+    }
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 
     console.log(`Generated ${transformedIdeas.length} ideas with ${allKeywords.length} keywords`);
 
     return NextResponse.json({
       success: true,
       data: {
+<<<<<<< HEAD
         keywords: allKeywords,
         projectIdeas: transformedIdeas
+=======
+        keywords,
+        projectIdeas
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
       }
     })
   } catch (error) {

@@ -4,8 +4,13 @@ A Next.js web application that generates innovative SaaS project ideas using Per
 
 ## 🚀 Features
 
+<<<<<<< HEAD
 - **AI-Powered Market Research**: Uses Perplexity AI Sonar to research topics in real-time and identify market opportunities
 - **Intelligent Idea Generation**: Combines AI research with comprehensive analysis to generate unique SaaS ideas
+=======
+- **AI-Powered Keyword Extraction**: Uses Perplexity Sonar Pro to extract relevant keywords from user prompts
+- **Intelligent Idea Generation**: Combines AI analysis with comprehensive web searches to generate unique SaaS ideas
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 - **User Authentication**: Secure sign-in/sign-up with Clerk
 - **Modern UI**: Beautiful, responsive interface with Tailwind CSS
 - **Detailed Project Analysis**: Includes tech stack suggestions, difficulty assessment, time estimates, and research sources
@@ -15,7 +20,11 @@ A Next.js web application that generates innovative SaaS project ideas using Per
 - **Frontend**: Next.js 15.4.4, React 19, TypeScript
 - **Styling**: Tailwind CSS v4
 - **Authentication**: Clerk
+<<<<<<< HEAD
 - **AI**: Perplexity AI Sonar
+=======
+- **AI**: Perplexity Sonar Pro
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 
 - **Icons**: Lucide React
 - **Fonts**: Geist Sans/Mono
@@ -25,7 +34,11 @@ A Next.js web application that generates innovative SaaS project ideas using Per
 Before you begin, ensure you have:
 - Node.js 18+ installed
 - npm or yarn package manager
+<<<<<<< HEAD
 - Perplexity AI API key
+=======
+- Perplexity Sonar API key
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 - Clerk account for authentication
 
 
@@ -46,7 +59,11 @@ Before you begin, ensure you have:
    
    Create a `.env.local` file in the root directory:
    ```env
+<<<<<<< HEAD
    # Perplexity AI API Configuration (Required)
+=======
+   # Perplexity Sonar API Configuration (Required)
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
    PERPLEXITY_API_KEY=your_perplexity_api_key_here
    
    # Clerk Authentication (Required)
@@ -58,7 +75,11 @@ Before you begin, ensure you have:
 
 4. **Get your API keys**
 
+<<<<<<< HEAD
    - **Perplexity AI**: Go to [Perplexity AI](https://www.perplexity.ai/) and create an API key
+=======
+   - **Perplexity Sonar API**: Go to [Perplexity AI](https://www.perplexity.ai/) and create an API key
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
    - **Clerk**: Sign up at [Clerk](https://clerk.com/) and create a new application
    
 
@@ -86,8 +107,14 @@ xxit/
 │   │   └── globals.css               # Global styles
 │   └── backend/
 │       ├── services/
+<<<<<<< HEAD
 │       │   ├── perplexity.ts         # Perplexity AI integration
 │       │   └── idea-generator.ts     # Project idea generation logic
+=======
+│       │   ├── perplexity.ts            # Perplexity Sonar integration
+
+│       │   └── idea-generator.ts    # Project idea generation logic
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 │       └── config/
 │           └── environment.ts        # Environment configuration
 ├── public/                          # Static assets
@@ -121,7 +148,11 @@ Generates SaaS project ideas based on user input.
         "market_need": "Addresses common challenges including: long wait times, staffing shortages",
         "tech_stack": ["React", "Node.js", "TypeScript", "Python", "TensorFlow"],
         "difficulty": "Hard",
+<<<<<<< HEAD
         "estimated_time": "3-6 months"
+=======
+        "estimatedTime": "3-6 months"
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
       }
     ]
   }
@@ -135,10 +166,16 @@ Tests the environment configuration and Perplexity AI connection.
 ## 🎯 How It Works
 
 1. **User Input**: User enters a concept (e.g., "healthcare automation")
+<<<<<<< HEAD
 2. **Keyword Extraction**: Perplexity AI extracts relevant keywords from the prompt
 3. **Market Research**: Perplexity AI researches the topic in real-time to understand current trends
 4. **Idea Generation**: Based on research findings, generates structured project ideas with technical details
 5. **Research Sources**: Provides links to all sources used in the research process
+=======
+2. **Keyword Extraction**: Perplexity Sonar Pro extracts relevant keywords
+3. **AI Analysis**: Perplexity Sonar Pro analyzes data from comprehensive web searches to identify market needs
+4. **Idea Generation**: Combines insights to generate structured project ideas
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 
 ## 🔒 Authentication
 
@@ -150,8 +187,12 @@ The app uses Clerk for authentication with:
 
 ## 🌐 Data Sources
 
+<<<<<<< HEAD
 - **Perplexity AI Sonar**: Real-time web research and AI analysis
 - **Search Results**: Comprehensive web search results for each research topic
+=======
+- **Perplexity Sonar Pro**: AI analysis and keyword extraction
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 
 ## 🚀 Deployment
 
@@ -191,7 +232,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Common Issues:**
 
 1. **API Key Errors**: Ensure all required environment variables are set in `.env.local`
+<<<<<<< HEAD
 2. **Connection Issues**: Test the `/api/test-env` endpoint to verify your Perplexity AI connection
 3. **Build Errors**: Run `npm install` to ensure all dependencies are installed
+=======
+
+3. **CORS Issues**: The app uses server-side API routes to avoid CORS problems
+4. **Build Errors**: Run `npm install` to ensure all dependencies are installed
+>>>>>>> 2345b269107e1e40dcccb1446eaa8d06f08654da
 
 For more help, check the console logs or open an issue on GitHub.
