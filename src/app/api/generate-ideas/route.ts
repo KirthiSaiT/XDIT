@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { PerplexityService } from '@/backend/services/perplexity'
 import { generateProjectIdeas } from '@/backend/services/idea-generator'
+import { DatabaseService } from '@/backend/services/database'
 
 export async function POST(request: Request) {
   try {
@@ -44,6 +45,28 @@ export async function POST(request: Request) {
     ).filter(Boolean);
     
     const allKeywords = [...new Set([...promptKeywords, ...researchKeywords])];
+
+    // Save ideas to MongoDB
+    try {
+      for (const idea of ideas) {
+        await DatabaseService.createProjectIdea({
+          idea: idea.idea,
+          description: idea.description,
+          marketNeed: idea.marketNeed,
+          techStack: idea.techStack,
+          difficulty: idea.difficulty,
+          estimatedTime: idea.estimatedTime,
+          sources: idea.sources || [],
+          keywords: allKeywords,
+          isPublic: true,
+          status: 'published'
+        })
+      }
+      console.log(`✅ Saved ${ideas.length} ideas to MongoDB`)
+    } catch (dbError) {
+      console.error('❌ Error saving ideas to MongoDB:', dbError)
+      // Continue with the response even if database save fails
+    }
 
     console.log(`Generated ${transformedIdeas.length} ideas with ${allKeywords.length} keywords`);
 

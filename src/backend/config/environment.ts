@@ -17,6 +17,10 @@ interface EnvironmentConfig {
     publishableKey: string
     secretKey: string
   }
+  mongodb: {
+    uri: string
+    database: string
+  }
 }
 
 function validateEnvironment(): EnvironmentConfig {
@@ -38,6 +42,10 @@ function validateEnvironment(): EnvironmentConfig {
     clerk: {
       publishableKey: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || '',
       secretKey: process.env.CLERK_SECRET_KEY || ''
+    },
+    mongodb: {
+      uri: process.env.MONGODB_URI || 'mongodb+srv://kirthisai251:tU80WISJAZVxhEpi@cluster0.0bztlsk.mongodb.net/xxit?retryWrites=true&w=majority&appName=Cluster0',
+      database: process.env.MONGODB_DATABASE || 'xxit'
     }
   }
 
