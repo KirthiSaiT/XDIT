@@ -11,26 +11,17 @@ import {
   Eye
 } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
-
-interface ProjectIdea {
-  _id: string
-  idea: string
-  description: string
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  techStack: string[]
-  createdAt: string
-  keywords: string[]
-}
+import { ProjectIdeaDisplay } from '@/types'
 
 interface HistorySidebarProps {
   isOpen: boolean
   onToggle: () => void
-  onSelectIdea: (idea: ProjectIdea) => void
+  onSelectIdea: (idea: ProjectIdeaDisplay) => void
 }
 
 export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySidebarProps) {
   const { user, isLoaded } = useUser()
-  const [ideas, setIdeas] = useState<ProjectIdea[]>([])
+  const [ideas, setIdeas] = useState<ProjectIdeaDisplay[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedIdea, setSelectedIdea] = useState<string | null>(null)
 
@@ -73,7 +64,7 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
     }
   }
 
-  const handleIdeaClick = (idea: ProjectIdea) => {
+  const handleIdeaClick = (idea: ProjectIdeaDisplay) => {
     setSelectedIdea(idea._id)
     onSelectIdea(idea)
   }

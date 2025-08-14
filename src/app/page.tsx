@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus, Loader2, ExternalLink, Clock, Zap } from 'lucide-react'
+import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus, Loader2, ExternalLink, Clock, Zap, Globe, History } from 'lucide-react'
 import {
   SignedIn,
   SignedOut,
@@ -12,25 +12,13 @@ import {
   useUser,
 } from '@clerk/nextjs'
 import { HistorySidebar } from '@/components/ui/sidebar'
-
-interface ProjectIdea {
-  idea: string
-  description: string
-  market_need: string
-  tech_stack: string[]
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  estimated_time: string
-  _id: string // Added for history sidebar
-  createdAt: string // Added for history sidebar
-  keywords: string[] // Added for history sidebar
-  techStack: string[] // Added for history sidebar
-}
+import { ProjectIdeaDisplay } from '@/types'
 
 interface APIResponse {
   success: boolean
   data: {
     keywords: string[]
-    projectIdeas: ProjectIdea[]
+    projectIdeas: ProjectIdeaDisplay[]
   }
   error?: string
 }
@@ -39,12 +27,12 @@ const Home: React.FC = () => {
   const { user, isLoaded } = useUser()
   const [inputValue, setInputValue] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [projectIdeas, setProjectIdeas] = useState<ProjectIdea[]>([])
+  const [projectIdeas, setProjectIdeas] = useState<ProjectIdeaDisplay[]>([])
   const [keywords, setKeywords] = useState<string[]>([])
   const [error, setError] = useState<string>('')
   const [hasSearched, setHasSearched] = useState<boolean>(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [selectedHistoryIdea, setSelectedHistoryIdea] = useState<ProjectIdea | null>(null)
+  const [selectedHistoryIdea, setSelectedHistoryIdea] = useState<ProjectIdeaDisplay | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -112,7 +100,7 @@ const Home: React.FC = () => {
     }
   }
 
-  const handleSelectHistoryIdea = (idea: ProjectIdea) => {
+  const handleSelectHistoryIdea = (idea: ProjectIdeaDisplay) => {
     setSelectedHistoryIdea(idea)
     setInputValue(idea.idea)
     setHasSearched(false)
@@ -171,6 +159,15 @@ const Home: React.FC = () => {
             </a>
           </nav>
           <div className="flex items-center">
+            <SignedIn>
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="mr-4 p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="View History"
+              >
+                <History className="w-5 h-5" />
+              </button>
+            </SignedIn>
             <SignedOut>
               <div className="hidden sm:flex items-center space-x-4">
                 <SignInButton mode="modal">
@@ -311,23 +308,44 @@ const Home: React.FC = () => {
                   </div>
                 </div>
                 
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center space-x-2 text-sm text-blue-700">
+                    <Globe className="w-4 h-4" />
+                    <span className="font-medium">Research Sources:</span>
+                    <span>Each idea below includes links to the internet forums, articles, and sources used for research</span>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Project Ideas */}
             {projectIdeas.length > 0 ? (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center">
-                  <Lightbulb className="w-6 h-6 mr-2 text-blue-600" />
-                  AI-Generated Project Ideas
-                </h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-slate-900 flex items-center">
+                    <Lightbulb className="w-6 h-6 mr-2 text-blue-600" />
+                    AI-Generated Project Ideas
+                  </h2>
+                  <div className="flex items-center space-x-2 text-sm text-slate-600">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+                      {projectIdeas.length} Ideas Generated
+                    </span>
+                  </div>
+                </div>
                 {projectIdeas.map((idea, index) => (
                   <div key={index} className="bg-white rounded-xl border border-slate-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-4">
-                        <h3 className="text-xl font-bold text-slate-900 flex-1 pr-4">
-                          {idea.idea}
-                        </h3>
+                        <div className="flex-1 pr-4">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-bold">
+                              Idea #{index + 1}
+                            </span>
+                            <h3 className="text-xl font-bold text-slate-900">
+                              {idea.idea}
+                            </h3>
+                          </div>
+                        </div>
                         <div className="flex items-center space-x-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(idea.difficulty)}`}>
                             {idea.difficulty}
@@ -371,6 +389,47 @@ const Home: React.FC = () => {
                         </div>
                       </div>
                       
+                      {/* Research Sources */}
+                      {idea.sources && idea.sources.length > 0 && (
+                        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <h4 className="font-semibold text-slate-900 mb-3 flex items-center">
+                            <Globe className="w-4 h-4 mr-2 text-blue-600" />
+                            Research Sources
+                          </h4>
+                          <div className="space-y-2">
+                            {idea.sources.slice(0, 5).map((source, sourceIndex) => (
+                              <div key={sourceIndex} className="text-sm">
+                                {source.title && (
+                                  <div className="font-medium text-slate-800 mb-1">
+                                    {source.title}
+                                  </div>
+                                )}
+                                {source.url && (
+                                  <a 
+                                    href={source.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 text-xs"
+                                  >
+                                    <ExternalLink className="w-3 h-3" />
+                                    {source.url.length > 50 ? source.url.substring(0, 50) + '...' : source.url}
+                                  </a>
+                                )}
+                                {source.snippet && (
+                                  <div className="text-slate-600 text-xs mt-1 line-clamp-2">
+                                    {source.snippet}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            {idea.sources.length > 5 && (
+                              <div className="text-xs text-slate-500 pt-2 border-t border-blue-200">
+                                +{idea.sources.length - 5} more sources
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       
                     </div>
                   </div>
@@ -383,8 +442,9 @@ const Home: React.FC = () => {
                 <p className="text-sm text-slate-500 mt-2">This may take 1-2 minutes for comprehensive research and idea generation</p>
                 <div className="mt-4 space-y-2 text-xs text-slate-400">
                   <p>🔍 Researching market trends and opportunities</p>
-                  <p>💡 Generating innovative project ideas</p>
+                  <p>💡 Generating 5 innovative project ideas</p>
                   <p>📊 Analyzing market gaps and solutions</p>
+                  <p>🔗 Collecting research sources and links</p>
                 </div>
               </div>
             ) : null}

@@ -1,13 +1,19 @@
 import { PerplexityService } from './perplexity'
 
 interface ProjectIdea {
+  _id?: string
   idea: string
   description: string
   marketNeed: string
   techStack: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard'
   estimatedTime: string
-  sources: any[]
+  sources: Array<{
+    title?: string
+    url?: string
+    snippet?: string
+    source?: string
+  }>
 }
 
 interface PerplexityMessage {
@@ -52,7 +58,7 @@ export async function generateProjectIdeas(
     console.log('Research completed. Search results found:', researchResponse.search_results?.length || 0);
     
     // Now generate project ideas based on the research
-    const ideaGenerationPrompt = `Based on the research about "${prompt}", generate 3 innovative SaaS project ideas.
+    const ideaGenerationPrompt = `Based on the research about "${prompt}", generate exactly 5 innovative SaaS project ideas.
 
     For each idea, provide:
     - A clear, concise title
@@ -78,7 +84,9 @@ export async function generateProjectIdeas(
         "difficulty": "Easy|Medium|Hard",
         "estimatedTime": "Time estimate"
       }
-    ]`;
+    ]
+    
+    IMPORTANT: Generate exactly 5 ideas, no more, no less.`;
 
     const ideaMessages: PerplexityMessage[] = [
       { 
@@ -108,6 +116,7 @@ export async function generateProjectIdeas(
         const jsonContent = JSON.parse(jsonMatch[0]);
         if (Array.isArray(jsonContent)) {
           ideas = jsonContent.map(item => ({
+            _id: `idea-${Date.now()}-${Math.random()}`,
             idea: item.idea || item.Idea || '',
             description: item.description || item.Description || '',
             marketNeed: item.marketNeed || item['Market Need'] || item.market_need || '',
@@ -125,6 +134,7 @@ export async function generateProjectIdeas(
       if (ideas.length === 0) {
         console.warn('No valid JSON found in response, creating fallback idea');
         ideas.push({
+          _id: `idea-${Date.now()}-${Math.random()}`,
           idea: `AI-Powered ${prompt} Solution`,
           description: content || `An innovative solution for ${prompt} leveraging AI and modern technology.`,
           marketNeed: `Addresses the growing need for ${prompt} solutions in the market.`,
@@ -138,6 +148,7 @@ export async function generateProjectIdeas(
     } catch (parseError) {
       console.warn('Could not parse AI response as JSON, creating fallback idea:', parseError);
       ideas.push({
+        _id: `idea-${Date.now()}-${Math.random()}`,
         idea: `Smart ${prompt} Platform`,
         description: `A comprehensive platform that addresses ${prompt} challenges using cutting-edge technology.`,
         marketNeed: `Solves critical problems in the ${prompt} industry.`,

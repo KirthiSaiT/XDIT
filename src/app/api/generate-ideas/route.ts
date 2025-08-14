@@ -36,6 +36,19 @@ export async function POST(request: Request) {
     // Generate project ideas
     const ideas = await generateProjectIdeas(prompt, extractedKeywords)
 
+    // Extract keywords from the prompt and add any from research
+    const promptKeywords = prompt.toLowerCase().split(' ').filter((word: string) => word.length > 3);
+    const researchKeywords = ideas.flatMap(idea =>
+      idea.sources?.map((source: any) => source.title || source.url) || []
+    ).filter(Boolean);
+
+    const allKeywords = [...new Set([...promptKeywords, ...researchKeywords])];
+    
+    // Ensure we have at least some keywords
+    if (allKeywords.length === 0) {
+      allKeywords.push(...extractedKeywords, prompt.toLowerCase().split(' ').filter((word: string) => word.length > 2).slice(0, 5));
+    }
+
     // Transform backend properties to match frontend interface
     const transformedIdeas = ideas.map(idea => ({
       idea: idea.idea,
@@ -44,16 +57,12 @@ export async function POST(request: Request) {
       tech_stack: idea.techStack,
       difficulty: idea.difficulty,
       estimated_time: idea.estimatedTime,
-      sources: idea.sources || []
+      sources: idea.sources || [],
+      _id: idea._id || `idea-${Date.now()}-${Math.random()}`,
+      createdAt: new Date().toISOString(),
+      keywords: allKeywords,
+      techStack: idea.techStack
     }))
-
-    // Extract keywords from the prompt and add any from research
-    const promptKeywords = prompt.toLowerCase().split(' ').filter((word: string) => word.length > 3);
-    const researchKeywords = ideas.flatMap(idea =>
-      idea.sources?.map((source: any) => source.title || source.url) || []
-    ).filter(Boolean);
-
-    const allKeywords = [...new Set([...promptKeywords, ...researchKeywords])];
 
     // Save ideas to MongoDB
     try {

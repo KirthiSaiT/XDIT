@@ -1,0 +1,21 @@
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/xxit
+MONGODB_DATABASE=xxit
+
+# Perplexity AI Configuration
+PERPLEXITY_API_KEY=your_perplexity_api_key_here
+
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key_here
+CLERK_SECRET_KEY=your_clerk_secret_key_here
+
+# Twitter API (Optional)
+TWITTER_BEARER_TOKEN=your_twitter_bearer_token_here
+TWITTER_API_KEY=your_twitter_api_key_here
+TWITTER_API_SECRET=your_twitter_api_secret_here
+
+# Scraping Configuration
+REDDIT_REQUEST_DELAY=1000
+X_REQUEST_DELAY=2000
+MAX_REDDIT_POSTS=20
+MAX_X_POSTS=15
