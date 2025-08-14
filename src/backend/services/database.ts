@@ -69,7 +69,7 @@ export class DatabaseService {
     }
   }
 
-  static async getUserIdeas(userId: string, limit = 20): Promise<IProjectIdea[]> {
+  static async getProjectIdeasByUserId(userId: string, limit = 20): Promise<IProjectIdea[]> {
     await ensureConnection()
     
     try {
@@ -77,7 +77,7 @@ export class DatabaseService {
         .sort({ createdAt: -1 })
         .limit(limit)
     } catch (error) {
-      console.error('❌ Error fetching user ideas:', error)
+      console.error('❌ Error fetching user project ideas:', error)
       throw error
     }
   }
@@ -103,6 +103,7 @@ export class DatabaseService {
     }
   }
 
+  // Delete project idea
   static async deleteProjectIdea(id: string): Promise<boolean> {
     await ensureConnection()
     
@@ -302,6 +303,24 @@ export class DatabaseService {
       console.log('✅ Test data cleared')
     } catch (error) {
       console.error('❌ Error clearing test data:', error)
+      throw error
+    }
+  }
+
+  // Ensure all indexes are created
+  static async ensureIndexes(): Promise<void> {
+    await ensureConnection()
+    
+    try {
+      // Create indexes for User model
+      await User.createIndexes()
+      
+      // Create indexes for ProjectIdea model
+      await ProjectIdea.createIndexes()
+      
+      console.log('✅ All database indexes created successfully')
+    } catch (error) {
+      console.error('❌ Error creating indexes:', error)
       throw error
     }
   }

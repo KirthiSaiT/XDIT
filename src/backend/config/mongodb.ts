@@ -63,6 +63,14 @@ class MongoDBConnection {
       this.isConnected = true
       console.log('✅ MongoDB connected successfully')
       
+      // Ensure all indexes are created after connection
+      try {
+        const { DatabaseService } = await import('../services/database')
+        await DatabaseService.ensureIndexes()
+      } catch (indexError) {
+        console.warn('⚠️ Warning: Could not create indexes:', indexError)
+      }
+      
       // Handle connection events
       mongoose.connection.on('error', (error) => {
         console.error('❌ MongoDB connection error:', error)

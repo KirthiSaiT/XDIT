@@ -8,7 +8,10 @@ import {
   SignInButton,
   SignUpButton,
   UserButton,
+  useAuth,
+  useUser,
 } from '@clerk/nextjs'
+import { HistorySidebar } from '@/components/ui/sidebar'
 
 interface ProjectIdea {
   idea: string
@@ -17,6 +20,10 @@ interface ProjectIdea {
   tech_stack: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard'
   estimated_time: string
+  _id: string // Added for history sidebar
+  createdAt: string // Added for history sidebar
+  keywords: string[] // Added for history sidebar
+  techStack: string[] // Added for history sidebar
 }
 
 interface APIResponse {
@@ -29,12 +36,15 @@ interface APIResponse {
 }
 
 const Home: React.FC = () => {
+  const { user, isLoaded } = useUser()
   const [inputValue, setInputValue] = useState<string>('')
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [projectIdeas, setProjectIdeas] = useState<ProjectIdea[]>([])
   const [keywords, setKeywords] = useState<string[]>([])
   const [error, setError] = useState<string>('')
   const [hasSearched, setHasSearched] = useState<boolean>(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [selectedHistoryIdea, setSelectedHistoryIdea] = useState<ProjectIdea | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -44,12 +54,25 @@ const Home: React.FC = () => {
       return
     }
 
+    // Wait for Clerk to fully load
+    if (!isLoaded) {
+      setError('Loading authentication... Please try again.')
+      return
+    }
+
+    // Check if user is signed in
+    if (!user) {
+      setError('Please sign in to generate ideas')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     setHasSearched(true)
 
     try {
-      // Call Python backend instead of Node.js API
+      // Clerk automatically includes authentication cookies/headers
+      // No need to manually add Authorization header
       const response = await fetch('/api/generate-ideas', {
         method: 'POST',
         headers: {
@@ -61,6 +84,9 @@ const Home: React.FC = () => {
       const data: APIResponse = await response.json()
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please try signing in again.')
+        }
         throw new Error(data.error || 'Failed to generate ideas')
       }
 
@@ -84,6 +110,15 @@ const Home: React.FC = () => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSelectHistoryIdea = (idea: ProjectIdea) => {
+    setSelectedHistoryIdea(idea)
+    setInputValue(idea.idea)
+    setHasSearched(false)
+    setProjectIdeas([])
+    setKeywords([])
+    setError('')
   }
 
   const getDifficultyColor = (difficulty: string) => {
@@ -184,44 +219,64 @@ const Home: React.FC = () => {
 
         {/* Input Form */}
         <div className="mb-24 max-w-3xl mx-auto">
-          <form
-            onSubmit={handleSubmit}
-            className="relative group transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1 rounded-2xl"
-          >
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-60 transition duration-500"></div>
-            <div className="relative bg-white border border-slate-200 rounded-2xl p-2 shadow-lg">
-              <div className="flex items-center">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Enter a concept: healthcare automation, fintech AI, remote work tools..."
-                    className="w-full pl-12 pr-4 py-4 bg-transparent text-slate-800 placeholder-slate-400 text-base focus:outline-none"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    disabled={isLoading}
-                  />
+          <SignedIn>
+            <form
+              onSubmit={handleSubmit}
+              className="relative group transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1 rounded-2xl"
+            >
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-60 transition duration-500"></div>
+              <div className="relative bg-white border border-slate-200 rounded-2xl p-2 shadow-lg">
+                <div className="flex items-center">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Enter a concept: healthcare automation, fintech AI, remote work tools..."
+                      className="w-full pl-12 pr-4 py-4 bg-transparent text-slate-800 placeholder-slate-400 text-base focus:outline-none"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading || !inputValue.trim()}
+                    className="px-5 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Generate Ideas</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  disabled={isLoading || !inputValue.trim()}
-                  className="px-5 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Analyzing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Generate Ideas</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
+              </div>
+            </form>
+          </SignedIn>
+          <SignedOut>
+            <div className="text-center p-8 bg-white rounded-2xl border border-slate-200 shadow-lg">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Sign in to generate ideas</h3>
+              <p className="text-slate-600 mb-6">Please sign in to use the idea generator and save your ideas.</p>
+              <div className="flex justify-center space-x-4">
+                <SignInButton mode="modal">
+                  <button className="px-5 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+                    <span>Sign In</span>
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button className="px-5 py-3 bg-slate-200 text-slate-800 font-semibold rounded-xl hover:bg-slate-300 transition-all duration-300 flex items-center space-x-2 text-base focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2">
+                    <span>Sign Up</span>
+                  </button>
+                </SignUpButton>
               </div>
             </div>
-          </form>
+          </SignedOut>
 
           {/* Error Message */}
           {error && (
@@ -358,6 +413,13 @@ const Home: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* History Sidebar */}
+      <HistorySidebar
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        onSelectIdea={handleSelectHistoryIdea}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">

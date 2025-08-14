@@ -1,43 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { DatabaseService } from '../../../backend/services/database'
+import { ensureConnection } from '@/backend/config/mongodb'
+import { DatabaseService } from '@/backend/services/database'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Test database connection
-    const isConnected = await DatabaseService.isConnected()
+    // Test connection
+    await ensureConnection()
     
-    if (!isConnected) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Database connection failed' 
-        },
-        { status: 500 }
-      )
-    }
-
-    // Get database stats
-    const stats = await DatabaseService.getDatabaseStats()
+    // Test index creation
+    await DatabaseService.ensureIndexes()
+    
+    // Test basic operations
+    const testUser = await DatabaseService.getUserByClerkId('test-clerk-id')
+    const testIdeas = await DatabaseService.getTrendingIdeas(5)
     
     return NextResponse.json({
       success: true,
-      message: 'MongoDB connection successful',
-      data: {
-        connection: 'connected',
-        stats
-      }
+      message: 'MongoDB connection and operations successful',
+      connection: 'Connected',
+      indexes: 'Created',
+      userCount: testUser ? 1 : 0,
+      ideaCount: testIdeas.length
     })
     
   } catch (error) {
-    console.error('MongoDB test error:', error)
-    
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error occurred' 
-      },
-      { status: 500 }
-    )
+    console.error('❌ MongoDB test failed:', error)
+    return NextResponse.json({
+      success: false,
+      message: 'MongoDB test failed',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 

@@ -151,8 +151,7 @@ const UserSchema = new Schema<IUser>({
 })
 
 // Indexes for better query performance
-UserSchema.index({ email: 1 })
-UserSchema.index({ username: 1 })
+// Remove duplicate indexes for email and username since unique: true already creates them
 UserSchema.index({ 'preferences.interests': 1 })
 UserSchema.index({ 'stats.lastActive': -1 })
 UserSchema.index({ 'subscription.plan': 1 })

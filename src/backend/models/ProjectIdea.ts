@@ -103,11 +103,13 @@ const ProjectIdeaSchema = new Schema<IProjectIdea>({
 })
 
 // Indexes for better query performance
+// Create text index for search functionality
 ProjectIdeaSchema.index({ keywords: 'text', idea: 'text', description: 'text' })
 ProjectIdeaSchema.index({ difficulty: 1, createdAt: -1 })
 ProjectIdeaSchema.index({ likes: -1, createdAt: -1 })
 ProjectIdeaSchema.index({ views: -1, createdAt: -1 })
 ProjectIdeaSchema.index({ isPublic: 1, status: 1 })
+ProjectIdeaSchema.index({ userId: 1, status: 1 }) // Add index for user queries
 
 // Virtual for idea popularity score
 ProjectIdeaSchema.virtual('popularityScore').get(function() {
