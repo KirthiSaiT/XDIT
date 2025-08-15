@@ -14,6 +14,7 @@ export interface IProjectIdea extends Document {
   likes: number
   views: number
   status: 'draft' | 'published' | 'archived'
+  plan?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -95,6 +96,10 @@ const ProjectIdeaSchema = new Schema<IProjectIdea>({
     type: String,
     enum: ['draft', 'published', 'archived'],
     default: 'published'
+  },
+  plan: {
+    type: String,
+    required: false
   }
 }, {
   timestamps: true,

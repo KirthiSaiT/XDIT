@@ -16,9 +16,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Project idea not found" }, { status: 404 });
   }
 
+  // If plan already exists, return it
+  if (idea.plan) {
+    return NextResponse.json({ plan: idea.plan });
+  }
+
   // Compose prompt for Gemini
   const prompt = `
-You are a world-class product manager and tech lead. Given the following project idea, provide a detailed plan on how to build, strategize, and market it.
+You are a world-class product manager, tech lead, and marketing strategist. Given the following project idea, provide an exhaustive and detailed plan on how to build, strategize, and market it.
 
 **Project Idea:** ${idea.idea}
 
@@ -32,33 +37,37 @@ You are a world-class product manager and tech lead. Given the following project
 
 **Estimated Time:** ${idea.estimatedTime}
 
-Provide a comprehensive plan covering the following sections:
+Provide a comprehensive and actionable plan covering the following sections in great detail:
 
 1.  **Technical Architecture:**
-    *   High-level overview of the architecture.
-    *   Recommended frontend and backend frameworks.
-    *   Database choice and schema design.
-    *   Key third-party services and APIs to integrate.
-    *   Deployment and hosting strategy.
+    *   **High-level Overview:** A diagram or a textual description of the overall system architecture (e.g., microservices, monolithic).
+    *   **Frontend:** Recommended framework (e.g., React, Vue, Svelte) with reasons, key libraries for state management, UI components, and testing.
+    *   **Backend:** Recommended framework (e.g., Node.js with Express, Python with Django/FastAPI) with reasons, API design principles (e.g., REST, GraphQL), and authentication strategy.
+    *   **Database:** Recommended database (e.g., PostgreSQL, MongoDB, Firebase) with reasons, and a sample schema for the main collections/tables.
+    *   **Third-party Services:** Key third-party APIs and services to integrate (e.g., for payments, emails, analytics).
+    *   **Deployment & Hosting:** Recommended cloud provider (e.g., AWS, Vercel, Netlify) and a CI/CD pipeline setup.
 
 2.  **Team Roles & Responsibilities:**
-    *   Essential roles needed for the initial team (e.g., Frontend Developer, Backend Developer, UI/UX Designer, Product Manager).
-    *   Key responsibilities for each role.
+    *   **Core Team (MVP):** A list of essential roles for the initial phase with their primary responsibilities.
+    *   **Extended Team (Post-MVP):** Roles to hire as the product grows.
+    *   **Skills Matrix:** A brief overview of the key skills required for the technical team.
 
 3.  **Development Timeline & Milestones:**
-    *   A realistic timeline broken down into phases (e.g., Phase 1: MVP, Phase 2: Core Features, Phase 3: V2).
-    *   Key milestones and deliverables for each phase.
+    *   **Phase 1: MVP (0-3 Months):** A detailed breakdown of features for the MVP, with weekly sprints or milestones.
+    *   **Phase 2: Core Features (3-6 Months):** Key features to be added after the MVP launch.
+    *   **Phase 3: V2 & Scaling (6-12 Months):** Long-term features and infrastructure scaling plans.
 
 4.  **Go-to-Market (GTM) Strategy:**
-    *   Target audience and user personas.
-    *   Pricing strategy and monetization model.
-    *   Marketing channels to focus on (e.g., content marketing, social media, SEO, paid ads).
-    *   Launch plan and initial user acquisition strategy.
+    *   **Target Audience:** Detailed user personas with their pain points and motivations.
+    *   **Pricing Strategy:** A tiered pricing model (e.g., Free, Pro, Enterprise) with features for each tier.
+    *   **Marketing Channels:** A mix of organic (content marketing, SEO, social media) and paid (PPC, social media ads) channels with a suggested budget allocation.
+    *   **Launch Plan:** A step-by-step plan for a successful product launch (e.g., pre-launch, launch day, post-launch activities).
 
 5.  **Growth & Scaling Strategy:**
-    *   Strategies to scale the user base after launch.
-    *   Long-term feature roadmap and product evolution.
-    *   Key metrics to track for success.
+    *   **User Acquisition:** Strategies to acquire the first 100, 1,000, and 10,000 users.
+    *   **User Retention:** Strategies to keep users engaged and reduce churn.
+    *   **Product Roadmap:** A long-term product roadmap with potential new features and integrations.
+    *   **Key Metrics (KPIs):** A list of key performance indicators to track for business success (e.g., MRR, LTV, CAC, Churn Rate).
 `;
 
   try {
@@ -82,6 +91,9 @@ Provide a comprehensive plan covering the following sections:
 
     const geminiData = await geminiRes.json();
     const plan = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "No plan generated.";
+
+    // Save the generated plan to the database
+    await DatabaseService.updateProjectIdea(historyId, { plan });
 
     return NextResponse.json({ plan });
 
