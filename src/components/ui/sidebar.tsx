@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { 
   History, 
   Lightbulb, 
@@ -20,6 +21,7 @@ interface HistorySidebarProps {
 }
 
 export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySidebarProps) {
+  const router = useRouter()
   const { user, isLoaded } = useUser()
   const [ideas, setIdeas] = useState<ProjectIdeaDisplay[]>([])
   const [loading, setLoading] = useState(false)
@@ -67,6 +69,11 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
   const handleIdeaClick = (idea: ProjectIdeaDisplay) => {
     setSelectedIdea(idea._id)
     onSelectIdea(idea)
+  }
+
+  const handleBriefClick = (e: React.MouseEvent, ideaId: string) => {
+    e.stopPropagation()
+    router.push(`/planning?historyId=${ideaId}`)
   }
 
   const getDifficultyColor = (difficulty: string) => {
@@ -178,6 +185,13 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
                           +{idea.techStack.length - 3}
                         </span>
                       )}
+                    </div>
+                    <div className="flex justify-end pt-2">
+                        <button 
+                            onClick={(e) => handleBriefClick(e, idea._id)}
+                            className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
+                            Brief
+                        </button>
                     </div>
                   </div>
                 </div>
