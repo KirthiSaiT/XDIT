@@ -1,5 +1,5 @@
 'use client'
-
+import Link from 'next/link'
 import { useState } from 'react'
 import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus, Loader2, ExternalLink, Clock, Zap, Globe, History } from 'lucide-react'
 import {
@@ -148,14 +148,19 @@ const Home: React.FC = () => {
             <span className="text-2xl font-bold text-slate-900">xxit</span>
           </div>
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
-            <a href="#" className="hover:text-blue-600 transition-colors">
+            <Link 
+              href="/features" 
+              className="hover:text-blue-600 transition-colors"
+            >
               Features
-            </a>
-            <a href="#" className="hover:text-blue-600 transition-colors">
-              Pricing
-            </a>
-            <a href="#" className="hover:text-blue-600 transition-colors">
-              About
+            </Link>
+            <a 
+              href="https://www.linkedin.com/in/kirthi-sai/" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-600 transition-colors"
+            >
+              Contact
             </a>
           </nav>
           <div className="flex items-center">
