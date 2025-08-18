@@ -1,12 +1,14 @@
+// src/app/api/ideas/[id]/route.ts
+
 import { NextResponse } from 'next/server'
 import { DatabaseService } from '@/backend/services/database'
 
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } } // Correctly destructure params here
 ) {
   try {
-    const ideaId = context.params.id
+    const ideaId = params.id // Access the id directly from the destructured params
     const idea = await DatabaseService.getProjectIdeaById(ideaId)
 
     if (!idea) {
