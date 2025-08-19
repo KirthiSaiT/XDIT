@@ -27,12 +27,6 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
   const [loading, setLoading] = useState(false)
   const [selectedIdea, setSelectedIdea] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      fetchUserHistory()
-    }
-  }, [isLoaded, user])
-
   const fetchUserHistory = useCallback(async () => {
     if (!user) return
     
@@ -48,6 +42,12 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
       setLoading(false)
     }
   }, [user])
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      fetchUserHistory()
+    }
+  }, [isLoaded, user, fetchUserHistory])
 
   const deleteIdea = async (ideaId: string) => {
     try {
