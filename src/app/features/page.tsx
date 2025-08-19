@@ -1,13 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { 
-  Lightbulb,
-  History,
-  FileText,
-  Share2,
-  Brain
-} from "lucide-react";
+import { Brain, History, FileText, Share2 } from "lucide-react";
 
 type Feature = {
   id: string;

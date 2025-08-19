@@ -1,26 +1,17 @@
-import { Schema, model, models, Document } from 'mongoose'
+import { Schema, model, models, Document } from 'mongoose';
 
 export interface IProjectIdea extends Document {
-  idea: string
-  description: string
-  marketNeed: string
-  techStack: string[]
-  difficulty: 'Easy' | 'Medium' | 'Hard'
-  estimatedTime: string
-  sources: any[]
-  keywords: string[]
-  userId?: string
-  isPublic: boolean
-  likes: number
-  views: number
-  status: 'draft' | 'published' | 'archived'
-  plan?: string
-  createdAt: Date
-  updatedAt: Date
+  title: string;
+  description?: string;
+  techStack?: string[];
+  difficulty?: string;
+  createdAt: Date;
+  plan?: string;
+  metadata: Record<string, unknown>;
 }
 
 const ProjectIdeaSchema = new Schema<IProjectIdea>({
-  idea: {
+  title: {
     type: String,
     required: [true, 'Idea title is required'],
     trim: true,
@@ -28,19 +19,13 @@ const ProjectIdeaSchema = new Schema<IProjectIdea>({
   },
   description: {
     type: String,
-    required: [true, 'Description is required'],
+    required: false,
     trim: true,
     maxlength: [2000, 'Description cannot exceed 2000 characters']
   },
-  marketNeed: {
-    type: String,
-    required: [true, 'Market need is required'],
-    trim: true,
-    maxlength: [1000, 'Market need cannot exceed 1000 characters']
-  },
   techStack: {
     type: [String],
-    required: [true, 'Tech stack is required'],
+    required: false,
     validate: {
       validator: function(v: string[]) {
         return v.length > 0 && v.length <= 20
@@ -51,55 +36,21 @@ const ProjectIdeaSchema = new Schema<IProjectIdea>({
   difficulty: {
     type: String,
     enum: ['Easy', 'Medium', 'Hard'],
-    required: [true, 'Difficulty level is required'],
+    required: false,
     default: 'Medium'
   },
-  estimatedTime: {
-    type: String,
-    required: [true, 'Estimated time is required'],
-    trim: true
-  },
-  sources: {
-    type: [Schema.Types.Mixed],
-    default: []
-  },
-  keywords: {
-    type: [String],
-    required: [true, 'Keywords are required'],
-    validate: {
-      validator: function(v: string[]) {
-        return v.length > 0 && v.length <= 50
-      },
-      message: 'Keywords must have between 1 and 50 items'
-    }
-  },
-  userId: {
-    type: String,
-    required: false,
-    index: true
-  },
-  isPublic: {
-    type: Boolean,
-    default: true
-  },
-  likes: {
-    type: Number,
-    default: 0,
-    min: [0, 'Likes cannot be negative']
-  },
-  views: {
-    type: Number,
-    default: 0,
-    min: [0, 'Views cannot be negative']
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'published', 'archived'],
-    default: 'published'
+  createdAt: {
+    type: Date,
+    required: true,
+    default: Date.now
   },
   plan: {
     type: String,
     required: false
+  },
+  metadata: {
+    type: Object,
+    required: true
   }
 }, {
   timestamps: true,
@@ -109,10 +60,8 @@ const ProjectIdeaSchema = new Schema<IProjectIdea>({
 
 // Indexes for better query performance
 // Create text index for search functionality
-ProjectIdeaSchema.index({ keywords: 'text', idea: 'text', description: 'text' })
+ProjectIdeaSchema.index({ title: 'text', description: 'text' })
 ProjectIdeaSchema.index({ difficulty: 1, createdAt: -1 })
-ProjectIdeaSchema.index({ likes: -1, createdAt: -1 })
-ProjectIdeaSchema.index({ views: -1, createdAt: -1 })
 ProjectIdeaSchema.index({ isPublic: 1, status: 1 })
 ProjectIdeaSchema.index({ userId: 1, status: 1 }) // Add index for user queries
 

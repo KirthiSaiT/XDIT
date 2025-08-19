@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   History, 
@@ -33,22 +33,21 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
     }
   }, [isLoaded, user])
 
-  const fetchUserHistory = async () => {
+  const fetchUserHistory = useCallback(async () => {
     if (!user) return
     
     setLoading(true)
     try {
       const response = await fetch('/api/user-history')
-      if (response.ok) {
-        const data = await response.json()
-        setIdeas(data.ideas || [])
-      }
+      if (!response.ok) throw new Error('Failed to fetch history')
+      const data = await response.json()
+      setIdeas(data.ideas || [])
     } catch (error) {
       console.error('Error fetching user history:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
   const deleteIdea = async (ideaId: string) => {
     try {

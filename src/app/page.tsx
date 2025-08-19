@@ -8,7 +8,6 @@ import {
   SignInButton,
   SignUpButton,
   UserButton,
-  useAuth,
   useUser,
 } from '@clerk/nextjs'
 import { HistorySidebar } from '@/components/ui/sidebar'
@@ -32,7 +31,8 @@ const Home: React.FC = () => {
   const [error, setError] = useState<string>('')
   const [hasSearched, setHasSearched] = useState<boolean>(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [selectedHistoryIdea, setSelectedHistoryIdea] = useState<ProjectIdeaDisplay | null>(null)
+  // The unused state variable has been removed from the destructuring to fix the warning.
+  const [, setSelectedHistoryIdea] = useState<ProjectIdeaDisplay | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -42,13 +42,11 @@ const Home: React.FC = () => {
       return
     }
 
-    // Wait for Clerk to fully load
     if (!isLoaded) {
       setError('Loading authentication... Please try again.')
       return
     }
 
-    // Check if user is signed in
     if (!user) {
       setError('Please sign in to generate ideas')
       return
@@ -59,8 +57,6 @@ const Home: React.FC = () => {
     setHasSearched(true)
 
     try {
-      // Clerk automatically includes authentication cookies/headers
-      // No need to manually add Authorization header
       const response = await fetch('/api/generate-ideas', {
         method: 'POST',
         headers: {
@@ -88,7 +84,6 @@ const Home: React.FC = () => {
     } catch (err) {
       console.error('Error generating ideas:', err)
       
-      // Check if it's a connection error
       if (err instanceof TypeError && err.message.includes('fetch')) {
         setError('Cannot connect to the backend. Please try again later.')
       } else {

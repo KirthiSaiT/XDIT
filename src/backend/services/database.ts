@@ -287,7 +287,7 @@ export class DatabaseService {
     try {
       await ensureConnection()
       return true
-    } catch (error) {
+    } catch { // The unused 'error' variable has been removed here.
       return false
     }
   }

@@ -210,15 +210,14 @@ export async function scrapeReddit(keywords: string[], originalPrompt: string = 
     // Score posts based on relevance to keywords and engagement
     const scoredPosts = uniquePosts.map(post => ({
       ...post,
-      relevanceScore: calculateRelevanceScore(post, keywords, originalPrompt)
+      relevanceScore: calculateRelevanceScore(post, keywords)
     }))
     
     const finalPosts = scoredPosts
       .sort((a, b) => b.relevanceScore - a.relevanceScore)
       .slice(0, 25) // Return top 25 posts
-      .map(post => {
-        // Remove relevanceScore from final output
-        const { relevanceScore, ...cleanPost } = post
+      .map(({ relevanceScore, ...cleanPost }) => {
+        // The unused 'relevanceScore' is now correctly destructured and ignored.
         return cleanPost
       })
     
@@ -304,13 +303,12 @@ async function searchSubreddit(subreddit: string, searchTerm: string): Promise<R
 }
 
 // Calculate relevance score for posts
-function calculateRelevanceScore(post: RedditPost, keywords: string[], prompt: string): number {
+function calculateRelevanceScore(post: RedditPost, keywords: string[]): number {
   let score = post.score || 0
   
   // Boost score based on keyword matches in title
   const titleLower = post.title.toLowerCase()
   const contentLower = post.content.toLowerCase()
-  const promptLower = prompt.toLowerCase()
   
   for (const keyword of keywords) {
     const keywordLower = keyword.toLowerCase()

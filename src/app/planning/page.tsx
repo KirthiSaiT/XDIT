@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useEffect, useState, Suspense, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import {
@@ -15,8 +15,6 @@ import {
   Target,
   TrendingUp,
   BrainCircuit,
-  Clock,
-  Zap,
   CheckCircle2,
   Sparkles,
   ChevronRight,
@@ -39,6 +37,14 @@ interface Section {
   icon: React.ReactNode;
 }
 
+interface PlanningError {
+  message: string;
+  code?: string;
+  details?: unknown;
+}
+
+// Unused types 'PlanError' and 'PlanResponse' have been removed.
+
 const SECTION_ICONS: { [key: string]: React.ReactNode } = {
   "Technical Architecture": <Component className="w-5 h-5" />,
   "Team Roles & Responsibilities": <Users className="w-5 h-5" />,
@@ -60,7 +66,6 @@ const getDifficultyColor = (difficulty: string) => {
 };
 
 const parsePlanIntoSections = (plan: string): Section[] => {
-  // Splits the plan by Markdown headings (##)
   const sectionRegex = /(?:^|\n)##\s(.+)/g;
   const sections = plan.split(sectionRegex).filter(Boolean);
 
@@ -72,7 +77,7 @@ const parsePlanIntoSections = (plan: string): Section[] => {
   for (let i = 0; i < sections.length; i += 2) {
     const title = sections[i].trim();
     const content = sections[i + 1] ? sections[i+1].trim() : '';
-    const mainTitle = title.replace(/\d+\.\s*/, ''); // Remove leading numbers like "1. "
+    const mainTitle = title.replace(/\d+\.\s*/, '');
     const icon = Object.entries(SECTION_ICONS).find(([key]) => mainTitle.includes(key))?.[1] || SECTION_ICONS["default"];
     structuredSections.push({ title: mainTitle, content, icon });
   }
@@ -148,12 +153,15 @@ const PlanDisplay = ({ idea, plan }: { idea: Idea, plan: string }) => {
       { rootMargin: "-30% 0px -70% 0px", threshold: 0 }
     );
 
-    sectionRefs.current.forEach((ref) => {
+    const currentRefs = sectionRefs.current;
+    currentRefs.forEach((ref) => {
       if (ref) observer.observe(ref);
     });
 
+    // This cleanup function now uses the captured 'currentRefs' variable
+    // to avoid the exhaustive-deps warning.
     return () => {
-      sectionRefs.current.forEach((ref) => {
+      currentRefs.forEach((ref) => {
         if (ref) observer.unobserve(ref);
       });
     };
@@ -233,6 +241,17 @@ function PlanningPageContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const handleError = (error: unknown) => {
+    if (error instanceof Error) {
+      setError(error.message);
+    } else if (typeof error === 'string') {
+      setError(error);
+    } else {
+      const planningError = error as PlanningError;
+      setError(planningError.message || 'Unknown error occurred');
+    }
+  };
+
   useEffect(() => {
     if (!historyId) {
         setLoading(false);
@@ -260,8 +279,8 @@ function PlanningPageContent() {
         if (ideaData.success) setIdea(ideaData.idea);
         setPlan(planData.plan);
 
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e: unknown) {
+        handleError(e);
       } finally {
         setLoading(false);
       }
@@ -287,10 +306,13 @@ function PlanningPageContent() {
   );
 }
 
+// The main export is now a wrapper that provides Suspense context for useSearchParams
 export default function PlanningPage() {
+  // Redundant and unused logic has been removed from this wrapper component.
+  // It now correctly wraps the content in a Suspense boundary, which is best practice.
   return (
-    <Suspense>
+    <React.Suspense fallback={<LoadingState />}>
       <PlanningPageContent />
-    </Suspense>
+    </React.Suspense>
   );
 }

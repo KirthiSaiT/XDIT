@@ -236,7 +236,7 @@ export async function scrapeX(keywords: string[], originalPrompt: string = ''): 
     for (const topic of topics) {
       try {
         console.log(`🔍 Generating X content for topic: ${topic}`)
-        const topicPosts = await generateTopicSpecificPosts(topic, keywords, originalPrompt)
+        const topicPosts = await generateTopicSpecificPosts(topic, keywords)
         allPosts.push(...topicPosts)
         
         // Add delay to simulate real scraping
@@ -264,8 +264,8 @@ export async function scrapeX(keywords: string[], originalPrompt: string = ''): 
     const finalPosts = scoredPosts
       .sort((a, b) => b.engagementScore - a.engagementScore)
       .slice(0, 20) // Return top 20 posts
-      .map(post => {
-        const { engagementScore, ...cleanPost } = post
+      .map(({ engagementScore, ...cleanPost }) => {
+        // The unused 'engagementScore' is now correctly destructured and ignored.
         return cleanPost
       })
     
@@ -282,11 +282,11 @@ export async function scrapeX(keywords: string[], originalPrompt: string = ''): 
 }
 
 // Generate topic-specific posts with realistic content
-async function generateTopicSpecificPosts(topic: string, keywords: string[], prompt: string): Promise<XPost[]> {
+async function generateTopicSpecificPosts(topic: string, keywords: string[]): Promise<XPost[]> {
   const topicData = TOPIC_X_MAP[topic] || TOPIC_X_MAP['technology']
   const primaryKeyword = keywords[0] || topic
   
-  const postTemplates = getTopicPostTemplates(topic, primaryKeyword, keywords)
+  const postTemplates = getTopicPostTemplates(topic, primaryKeyword)
   const posts: XPost[] = []
   
   for (let i = 0; i < Math.min(8, postTemplates.length); i++) {
@@ -351,7 +351,7 @@ function getContentEngagementMultiplier(content: string): number {
 }
 
 // Generate topic-specific post templates
-function getTopicPostTemplates(topic: string, primaryKeyword: string, keywords: string[]): Array<{ content: string; hashtags: string[] }> {
+function getTopicPostTemplates(topic: string, primaryKeyword: string): Array<{ content: string; hashtags: string[] }> {
   const topicData = TOPIC_X_MAP[topic] || TOPIC_X_MAP['technology']
   const hashtags = topicData.hashtags.slice(0, 3)
   
@@ -486,7 +486,7 @@ function generateFallbackXPosts(keyword: string): XPost[] {
     }
   ]
   
-  return fallbackTemplates.map((template, index) => {
+  return fallbackTemplates.map((template) => {
     const tweetId = generateRealisticTweetId()
     const baseEngagement = getBaseEngagement('medium')
     
