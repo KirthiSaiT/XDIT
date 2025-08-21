@@ -24,12 +24,10 @@ export async function GET(req: NextRequest) {
   const prompt = `
 You are a world-class product manager, tech lead, and marketing strategist. Given the following project idea, provide an exhaustive and detailed plan on how to build, strategize, and market it. Format your response using Markdown for clear headings, lists, and emphasis.
 
-**Project Idea:** ${idea.idea}
+**Project Idea:** ${idea.title}
 **Description:** ${idea.description}
-**Market Need:** ${idea.marketNeed}
-**Suggested Tech Stack:** ${idea.techStack.join(', ')}
+**Suggested Tech Stack:** ${idea.techStack?.join(', ') || 'Not specified'}
 **Difficulty:** ${idea.difficulty}
-**Estimated Time:** ${idea.estimatedTime}
 
 Provide a comprehensive and actionable plan covering the following sections in great detail:
 

@@ -142,3 +142,9 @@ export { mongoose }
 export async function ensureConnection(): Promise<typeof mongoose> {
   return await mongodb.connect()
 }
+
+// Legacy function for backward compatibility
+export async function connectToDatabase(): Promise<{ db: typeof mongoose.connection.db }> {
+  const connection = await mongodb.connect()
+  return { db: connection.connection.db }
+}

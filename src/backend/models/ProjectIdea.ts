@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from 'mongoose';
+import { Schema, model, models, Document, Model } from 'mongoose';
 
 export interface IProjectIdea extends Document {
   title: string;
@@ -8,6 +8,19 @@ export interface IProjectIdea extends Document {
   createdAt: Date;
   plan?: string;
   metadata: Record<string, unknown>;
+  keywords?: string[];
+  isPublic?: boolean;
+  status?: string;
+  userId?: string;
+  likes?: number;
+  views?: number;
+}
+
+// Interface for static methods
+interface IProjectIdeaModel extends Model<IProjectIdea> {
+  findTrending(limit?: number): Promise<IProjectIdea[]>;
+  findByDifficulty(difficulty: string, limit?: number): Promise<IProjectIdea[]>;
+  searchIdeas(searchTerm: string, limit?: number): Promise<IProjectIdea[]>;
 }
 
 const ProjectIdeaSchema = new Schema<IProjectIdea>({
@@ -50,7 +63,38 @@ const ProjectIdeaSchema = new Schema<IProjectIdea>({
   },
   metadata: {
     type: Object,
-    required: true
+    required: true,
+    default: {}
+  },
+  keywords: {
+    type: [String],
+    required: false,
+    default: []
+  },
+  isPublic: {
+    type: Boolean,
+    required: false,
+    default: false
+  },
+  status: {
+    type: String,
+    enum: ['draft', 'published', 'archived'],
+    required: false,
+    default: 'draft'
+  },
+  userId: {
+    type: String,
+    required: false
+  },
+  likes: {
+    type: Number,
+    required: false,
+    default: 0
+  },
+  views: {
+    type: Number,
+    required: false,
+    default: 0
   }
 }, {
   timestamps: true,
@@ -67,12 +111,12 @@ ProjectIdeaSchema.index({ userId: 1, status: 1 }) // Add index for user queries
 
 // Virtual for idea popularity score
 ProjectIdeaSchema.virtual('popularityScore').get(function() {
-  return this.likes * 2 + this.views
+  return (this.likes || 0) * 2 + (this.views || 0)
 })
 
 // Pre-save middleware to ensure keywords are unique
 ProjectIdeaSchema.pre('save', function(next) {
-  if (this.keywords) {
+  if (this.keywords && Array.isArray(this.keywords)) {
     this.keywords = [...new Set(this.keywords.map(k => k.toLowerCase().trim()))]
   }
   next()
@@ -107,4 +151,4 @@ ProjectIdeaSchema.statics.searchIdeas = function(searchTerm: string, limit = 20)
     .limit(limit)
 }
 
-export const ProjectIdea = models.ProjectIdea || model<IProjectIdea>('ProjectIdea', ProjectIdeaSchema)
+export const ProjectIdea = (models.ProjectIdea || model<IProjectIdea, IProjectIdeaModel>('ProjectIdea', ProjectIdeaSchema)) as IProjectIdeaModel

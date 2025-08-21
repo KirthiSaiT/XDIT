@@ -11,7 +11,7 @@ export class DatabaseService {
       const projectIdea = new ProjectIdea(ideaData)
       const savedIdea = await projectIdea.save()
       
-      console.log(`✅ Project idea created: ${savedIdea.idea}`)
+      console.log(`✅ Project idea created: ${savedIdea.title}`)
       return savedIdea
     } catch (error) {
       console.error('❌ Error creating project idea:', error)
@@ -26,7 +26,7 @@ export class DatabaseService {
       const idea = await ProjectIdea.findById(id)
       if (idea) {
         // Increment view count
-        idea.views += 1
+        idea.views = (idea.views || 0) + 1
         await idea.save()
       }
       return idea
@@ -93,7 +93,7 @@ export class DatabaseService {
       )
       
       if (updatedIdea) {
-        console.log(`✅ Project idea updated: ${updatedIdea.idea}`)
+        console.log(`✅ Project idea updated: ${updatedIdea.title}`)
       }
       
       return updatedIdea
@@ -110,7 +110,7 @@ export class DatabaseService {
     try {
       const result = await ProjectIdea.findByIdAndDelete(id)
       if (result) {
-        console.log(`✅ Project idea deleted: ${result.idea}`)
+        console.log(`✅ Project idea deleted: ${result.title}`)
         return true
       }
       return false
@@ -131,7 +131,7 @@ export class DatabaseService {
       )
       
       if (idea) {
-        console.log(`✅ Project idea liked: ${idea.idea} (${idea.likes} likes)`)
+        console.log(`✅ Project idea liked: ${idea.title} (${idea.likes} likes)`)
       }
       
       return idea

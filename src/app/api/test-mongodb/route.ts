@@ -6,6 +6,9 @@ import { DatabaseService } from '@/backend/services/database'
 export async function GET() {
   try {
     const { db } = await connectToDatabase()
+    if (!db) {
+      throw new Error('Database connection failed')
+    }
     await db.command({ ping: 1 })
         
     // Test index creation
@@ -43,12 +46,10 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'create_test_idea':
         const testIdea = await DatabaseService.createProjectIdea({
-          idea: 'Test SaaS Idea',
+          title: 'Test SaaS Idea',
           description: 'This is a test idea to verify MongoDB functionality',
-          marketNeed: 'Testing database operations',
           techStack: ['Node.js', 'MongoDB', 'React'],
           difficulty: 'Easy',
-          estimatedTime: '1-2 weeks',
           keywords: ['test', 'saas', 'mongodb'],
           isPublic: true,
           status: 'published'
@@ -86,6 +87,9 @@ export async function POST(request: NextRequest) {
       case 'test_connection':
         // Moved the testConnection logic here as a POST action
         const { db } = await connectToDatabase()
+        if (!db) {
+          throw new Error('Database connection failed')
+        }
         await db.command({ ping: 1 })
         
         return NextResponse.json({
