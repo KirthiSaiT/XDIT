@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from 'mongoose'
+import { Schema, model, models, Document, Model } from 'mongoose'
 
 export interface IUser extends Document {
   clerkId: string
@@ -32,6 +32,13 @@ export interface IUser extends Document {
   }
   createdAt: Date
   updatedAt: Date
+  updateStats(type: 'generated' | 'saved' | 'liked' | 'searched'): Promise<IUser>
+}
+
+// Interface for static methods
+interface IUserModel extends Model<IUser> {
+  findByInterests(interests: string[], limit?: number): Promise<IUser[]>;
+  findActiveUsers(days?: number, limit?: number): Promise<IUser[]>;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -218,4 +225,4 @@ UserSchema.methods.updateStats = function(type: 'generated' | 'saved' | 'liked' 
   return this.save()
 }
 
-export const User = models.User || model<IUser>('User', UserSchema)
+export const User = (models.User || model<IUser, IUserModel>('User', UserSchema)) as IUserModel

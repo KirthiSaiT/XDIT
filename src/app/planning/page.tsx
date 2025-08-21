@@ -204,7 +204,7 @@ const PlanDisplay = ({ idea, plan }: { idea: Idea, plan: string }) => {
             <section
               key={title}
               id={title.toLowerCase().replace(/\s/g, '-')}
-              ref={el => sectionRefs.current[index] = el}
+              ref={el => { sectionRefs.current[index] = el; }}
               className="scroll-mt-24"
             >
               <div className="flex items-center space-x-3 mb-4">
