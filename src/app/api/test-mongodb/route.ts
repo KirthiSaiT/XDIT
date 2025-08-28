@@ -1,8 +1,8 @@
+// src/app/api/test-mongodb/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { connectToDatabase } from '@/backend/config/mongodb'
 import { DatabaseService } from '@/backend/services/database'
 
-// The unused '_request' parameter has been removed from the function signature.
 export async function GET() {
   try {
     const mongoose = await connectToDatabase();
@@ -60,7 +60,6 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json()
-    // The unused 'data' variable has been removed from the destructuring.
     const { action } = body
     
     switch (action) {
@@ -105,7 +104,6 @@ export async function POST(request: NextRequest) {
         })
         
       case 'test_connection':
-        // Moved the testConnection logic here as a POST action
         await db.command({ ping: 1 })
         
         return NextResponse.json({
@@ -116,7 +114,7 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json(
           { 
-           success: false,
+            success: false,
             error: 'Invalid action. Use: create_test_idea, create_test_user, clear_test_data, or test_connection'
           },
           { status: 400 }
@@ -128,7 +126,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json(
       { 
-       success: false,
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred'
       },
       { status: 500 }
