@@ -2,16 +2,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectToDatabase } from '@/backend/config/mongodb'
 import { DatabaseService } from '@/backend/services/database'
+import mongoose from 'mongoose'; // <-- FIX: Import the actual mongoose library
 
 export async function GET() {
   try {
-    const mongoose = await connectToDatabase();
+    // Ensure the database is connected. 
+    // We don't need the return value, just to make sure the connection is established.
+    await connectToDatabase();
     
-    // Add null check to satisfy TypeScript
-    if (!mongoose || !mongoose.connection) {
+    // FIX: Check the connection state on the imported mongoose instance.
+    // readyState === 1 means the connection is active.
+    if (mongoose.connection.readyState !== 1) {
       throw new Error('Database connection failed')
     }
     
+    // Use the mongoose connection directly from the imported library
     const db = mongoose.connection.db;
     if (!db) {
       throw new Error('Database instance not available')
@@ -47,10 +52,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const mongoose = await connectToDatabase();
+    // Ensure the database is connected
+    await connectToDatabase();
     
-    // Add null check to satisfy TypeScript
-    if (!mongoose || !mongoose.connection) {
+    // FIX: Check the connection state on the imported mongoose instance.
+    if (mongoose.connection.readyState !== 1) {
       throw new Error('Database connection failed')
     }
     
