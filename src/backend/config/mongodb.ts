@@ -2,6 +2,14 @@
 import mongoose from "mongoose";
 import { env } from "./environment";
 
+// Extend the global object type to include mongoose
+declare global {
+  var mongoose: {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+  };
+}
+
 if (!env.mongodb.uri) {
   throw new Error(
     "Please define the MONGODB_URI environment variable inside .env.local"
