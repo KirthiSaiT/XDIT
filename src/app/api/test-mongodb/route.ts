@@ -5,8 +5,9 @@ import { DatabaseService } from '@/backend/services/database'
 // The unused '_request' parameter has been removed from the function signature.
 export async function GET() {
   try {
-    const { db } = await connectToDatabase()
-    if (!db) {
+    const mongoose = await connectToDatabase();
+    const db = mongoose.connection.db;
+    if (!mongoose.connection) {
       throw new Error('Database connection failed')
     }
     await db.command({ ping: 1 })
@@ -39,6 +40,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const mongoose = await connectToDatabase();
+    const db = mongoose.connection.db;
     const body = await request.json()
     // The unused 'data' variable has been removed from the destructuring.
     const { action } = body
@@ -86,8 +89,7 @@ export async function POST(request: NextRequest) {
       
       case 'test_connection':
         // Moved the testConnection logic here as a POST action
-        const { db } = await connectToDatabase()
-        if (!db) {
+        if (!mongoose.connection) {
           throw new Error('Database connection failed')
         }
         await db.command({ ping: 1 })

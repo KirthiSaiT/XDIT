@@ -1,11 +1,11 @@
-import { ensureConnection } from '../config/mongodb'
+import { connectToDatabase } from '../config/mongodb'
 import { ProjectIdea, IProjectIdea } from '../models/ProjectIdea'
 import { User, IUser } from '../models/User'
 
 export class DatabaseService {
   // Project Idea Operations
   static async createProjectIdea(ideaData: Partial<IProjectIdea>): Promise<IProjectIdea> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const projectIdea = new ProjectIdea(ideaData)
@@ -20,7 +20,7 @@ export class DatabaseService {
   }
 
   static async getProjectIdeaById(id: string): Promise<IProjectIdea | null> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const idea = await ProjectIdea.findById(id)
@@ -37,7 +37,7 @@ export class DatabaseService {
   }
 
   static async getTrendingIdeas(limit = 10): Promise<IProjectIdea[]> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await ProjectIdea.findTrending(limit)
@@ -48,7 +48,7 @@ export class DatabaseService {
   }
 
   static async getIdeasByDifficulty(difficulty: string, limit = 20): Promise<IProjectIdea[]> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await ProjectIdea.findByDifficulty(difficulty, limit)
@@ -59,7 +59,7 @@ export class DatabaseService {
   }
 
   static async searchIdeas(searchTerm: string, limit = 20): Promise<IProjectIdea[]> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await ProjectIdea.searchIdeas(searchTerm, limit)
@@ -70,7 +70,7 @@ export class DatabaseService {
   }
 
   static async getProjectIdeasByUserId(userId: string, limit = 20): Promise<IProjectIdea[]> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await ProjectIdea.find({ userId, status: { $ne: 'archived' } })
@@ -83,7 +83,7 @@ export class DatabaseService {
   }
 
   static async updateProjectIdea(id: string, updateData: Partial<IProjectIdea>): Promise<IProjectIdea | null> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const updatedIdea = await ProjectIdea.findByIdAndUpdate(
@@ -105,7 +105,7 @@ export class DatabaseService {
 
   // Delete project idea
   static async deleteProjectIdea(id: string): Promise<boolean> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const result = await ProjectIdea.findByIdAndDelete(id)
@@ -121,7 +121,7 @@ export class DatabaseService {
   }
 
   static async likeProjectIdea(id: string): Promise<IProjectIdea | null> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const idea = await ProjectIdea.findByIdAndUpdate(
@@ -143,7 +143,7 @@ export class DatabaseService {
 
   // User Operations
   static async createUser(userData: Partial<IUser>): Promise<IUser> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const user = new User(userData)
@@ -158,7 +158,7 @@ export class DatabaseService {
   }
 
   static async getUserByClerkId(clerkId: string): Promise<IUser | null> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await User.findOne({ clerkId })
@@ -169,7 +169,7 @@ export class DatabaseService {
   }
 
   static async getUserByEmail(email: string): Promise<IUser | null> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await User.findOne({ email: email.toLowerCase() })
@@ -180,7 +180,7 @@ export class DatabaseService {
   }
 
   static async updateUser(clerkId: string, updateData: Partial<IUser>): Promise<IUser | null> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const updatedUser = await User.findOneAndUpdate(
@@ -201,7 +201,7 @@ export class DatabaseService {
   }
 
   static async updateUserStats(clerkId: string, statType: 'generated' | 'saved' | 'liked' | 'searched'): Promise<void> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const user = await User.findOne({ clerkId })
@@ -215,7 +215,7 @@ export class DatabaseService {
   }
 
   static async getUsersByInterests(interests: string[], limit = 20): Promise<IUser[]> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await User.findByInterests(interests, limit)
@@ -226,7 +226,7 @@ export class DatabaseService {
   }
 
   static async getActiveUsers(days = 7, limit = 50): Promise<IUser[]> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       return await User.findActiveUsers(days, limit)
@@ -244,7 +244,7 @@ export class DatabaseService {
     totalViews: number
     activeUsersLast7Days: number
   }> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       const [
@@ -285,7 +285,7 @@ export class DatabaseService {
   // Utility Operations
   static async isConnected(): Promise<boolean> {
     try {
-      await ensureConnection()
+      await connectToDatabase()
       return true
     } catch { // The unused 'error' variable has been removed here.
       return false
@@ -293,7 +293,7 @@ export class DatabaseService {
   }
 
   static async clearTestData(): Promise<void> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       await Promise.all([
@@ -309,7 +309,7 @@ export class DatabaseService {
 
   // Ensure all indexes are created
   static async ensureIndexes(): Promise<void> {
-    await ensureConnection()
+    await connectToDatabase()
     
     try {
       // Create indexes for User model
