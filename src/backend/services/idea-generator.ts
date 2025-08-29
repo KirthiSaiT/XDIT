@@ -5,6 +5,7 @@ interface ProjectIdea {
   idea: string
   description: string
   marketNeed: string
+  marketValue: string
   techStack: string[]
   difficulty: 'Easy' | 'Medium' | 'Hard'
   estimatedTime: string
@@ -27,10 +28,8 @@ export async function generateProjectIdeas(
 ): Promise<ProjectIdea[]> {
   try {
     console.log('Starting idea generation for prompt:', prompt);
-    console.log('Starting idea generation for prompt:', prompt);
     console.log('Keywords:', keywords);
-    
-    // First, let's research the topic to understand current market trends
+
     const researchPrompt = `Research the following topic: "${prompt}". 
     
     Please provide:
@@ -56,17 +55,18 @@ export async function generateProjectIdeas(
     const researchResponse = await PerplexityService.chat(researchMessages, 'sonar');
     
     console.log('Research completed. Search results found:', researchResponse.search_results?.length || 0);
-    
-    // Now generate project ideas based on the research
+
     const ideaGenerationPrompt = `Based on the research about "${prompt}", generate exactly 5 innovative SaaS project ideas.
 
     For each idea, provide:
     - A clear, concise title
     - A detailed description explaining the concept
     - The specific market need or problem it solves
+    - An estimated market value or potential revenue.
     - Recommended technology stack (be specific with frameworks, languages, tools)
     - Difficulty level (Easy: 1-2 months, Medium: 3-6 months, Hard: 6+ months)
-    - Estimated development time
+    - A brief explanation for the estimated development time.
+    - A list of relevant research sources (URLs) that you used to generate this specific idea.
     
     Make sure each idea is:
     - Feasible with current technology
@@ -80,13 +80,18 @@ export async function generateProjectIdeas(
         "idea": "Project Title",
         "description": "Detailed description",
         "marketNeed": "Specific problem it solves",
+        "marketValue": "Estimated market value",
         "techStack": ["Technology1", "Technology2"],
         "difficulty": "Easy|Medium|Hard",
-        "estimatedTime": "Time estimate"
+        "estimatedTime": "Time estimate with explanation",
+        "sources": [
+            { "title": "Source Title 1", "url": "https://example.com/source1" },
+            { "title": "Source Title 2", "url": "https://example.com/source2" }
+        ]
       }
     ]
     
-    IMPORTANT: Generate exactly 5 ideas, no more, no less.`;
+    IMPORTANT: Generate exactly 5 ideas, no more, no less. Each idea must have its own list of sources.`;
 
     const ideaMessages: PerplexityMessage[] = [
       { 
@@ -104,33 +109,29 @@ export async function generateProjectIdeas(
     
     console.log('Ideas generated. Processing response...');
 
-    // Process the generated ideas
     let ideas: ProjectIdea[] = [];
     try {
       const content = ideaResponse.choices[0].message.content;
       console.log('Raw AI response:', content.substring(0, 200) + '...');
       
-      // Try to extract JSON from the response
       const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         const jsonContent = JSON.parse(jsonMatch[0]);
         if (Array.isArray(jsonContent)) {
           ideas = jsonContent.map(item => ({
             _id: `idea-${Date.now()}-${Math.random()}`,
-            idea: item.idea || item.Idea || '',
-            description: item.description || item.Description || '',
-            marketNeed: item.marketNeed || item['Market Need'] || item.market_need || '',
-            techStack: Array.isArray(item.techStack || item['Tech Stack'] || item.tech_stack) 
-              ? (item.techStack || item['Tech Stack'] || item.tech_stack) 
-              : [],
-            difficulty: item.difficulty || item.Difficulty || 'Medium',
-            estimatedTime: item.estimatedTime || item['Estimated Time'] || item.estimated_time || '',
-            sources: researchResponse.search_results || []
+            idea: item.idea || '',
+            description: item.description || '',
+            marketNeed: item.marketNeed || '',
+            marketValue: item.marketValue || '',
+            techStack: Array.isArray(item.techStack) ? item.techStack : [],
+            difficulty: item.difficulty || 'Medium',
+            estimatedTime: item.estimatedTime || '',
+            sources: Array.isArray(item.sources) ? item.sources : (researchResponse.search_results || [])
           }));
         }
       }
       
-      // If no valid JSON found, create a fallback idea
       if (ideas.length === 0) {
         console.warn('No valid JSON found in response, creating fallback idea');
         ideas.push({
@@ -138,6 +139,7 @@ export async function generateProjectIdeas(
           idea: `AI-Powered ${prompt} Solution`,
           description: content || `An innovative solution for ${prompt} leveraging AI and modern technology.`,
           marketNeed: `Addresses the growing need for ${prompt} solutions in the market.`,
+          marketValue: 'Not estimated.',
           techStack: ['React', 'Node.js', 'Python', 'AI/ML'],
           difficulty: 'Medium',
           estimatedTime: '3-6 months',
@@ -152,6 +154,7 @@ export async function generateProjectIdeas(
         idea: `Smart ${prompt} Platform`,
         description: `A comprehensive platform that addresses ${prompt} challenges using cutting-edge technology.`,
         marketNeed: `Solves critical problems in the ${prompt} industry.`,
+        marketValue: 'Not estimated.',
         techStack: ['React', 'Node.js', 'TypeScript', 'AI/ML'],
         difficulty: 'Medium',
         estimatedTime: '4-8 months',
@@ -166,4 +169,4 @@ export async function generateProjectIdeas(
     console.error('Error generating project ideas:', error);
     throw error;
   }
-} 
+}

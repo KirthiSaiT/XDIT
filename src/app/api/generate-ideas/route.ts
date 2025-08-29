@@ -23,6 +23,7 @@ interface ProjectIdea {
   difficulty?: "Easy" | "Medium" | "Hard";
   estimatedTime?: string;
   marketNeed?: string;
+  marketValue?: string;
   sourceLinks?: string[];
 }
 
@@ -55,6 +56,7 @@ interface BackendIdea {
   idea: string; // This will be mapped to 'title'
   description: string;
   marketNeed?: string;
+  marketValue?: string;
   techStack?: string[];
   difficulty?: "Easy" | "Medium" | "Hard";
   estimatedTime?: string;
@@ -138,6 +140,7 @@ export async function POST(
       title: idea.idea,
       description: idea.description,
       marketNeed: idea.marketNeed,
+      marketValue: idea.marketValue,
       techStack: idea.techStack,
       difficulty: idea.difficulty,
       estimatedTime: idea.estimatedTime,
@@ -145,21 +148,20 @@ export async function POST(
       _id: idea._id || `idea-${Date.now()}-${Math.random()}`,
       createdAt: new Date().toISOString(),
       keywords: allKeywords,
+      sources: idea.sources,
     }));
 
     // Save the generated ideas to the database
     try {
       for (const idea of ideas) {
-        // This object is now strictly typed to match the IProjectIdea schema
-        // by removing properties that were causing errors.
         await DatabaseService.createProjectIdea({
           title: idea.idea,
           description: idea.description,
           techStack: idea.techStack,
           difficulty: idea.difficulty,
-          // REMOVED: estimatedTime - This field does not exist in the DB schema.
-          // REMOVED: marketNeed / problem - This field does not exist in the DB schema.
-          // REMOVED: sources - This field does not exist in the DB schema.
+          estimatedTime: idea.estimatedTime,
+          marketValue: idea.marketValue,
+          sources: idea.sources,
           keywords: allKeywords,
           isPublic: true,
           status: "published",

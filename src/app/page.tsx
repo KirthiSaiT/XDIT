@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus, Loader2, ExternalLink, Clock, Zap, Globe, History } from 'lucide-react'
+import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus, Loader2, ExternalLink, Clock, Zap, Globe, History, DollarSign } from 'lucide-react'
 import {
   SignedIn,
   SignedOut,
@@ -31,7 +31,6 @@ const Home: React.FC = () => {
   const [error, setError] = useState<string>('')
   const [hasSearched, setHasSearched] = useState<boolean>(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  // The unused state variable has been removed from the destructuring to fix the warning.
   const [, setSelectedHistoryIdea] = useState<ProjectIdeaDisplay | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -357,21 +356,27 @@ const Home: React.FC = () => {
                         {idea.description}
                       </p>
                       
-                      <div className="grid md:grid-cols-2 gap-6 mb-4">
+                      <div className="grid md:grid-cols-3 gap-6 mb-4">
                         <div>
                           <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
                             <Search className="w-4 h-4 mr-1" />
                             Market Need
                           </h4>
-                          <p className="text-sm text-slate-600">{idea.market_need}</p>
+                          <p className="text-sm text-slate-600">{idea.marketNeed}</p>
                         </div>
-                        
+                        <div>
+                          <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
+                            <DollarSign className="w-4 h-4 mr-1" />
+                            Market Value
+                          </h4>
+                          <p className="text-sm text-slate-600">{idea.marketValue}</p>
+                        </div>
                         <div>
                           <h4 className="font-semibold text-slate-900 mb-2 flex items-center">
                             <Clock className="w-4 h-4 mr-1" />
                             Estimated Time
                           </h4>
-                          <p className="text-sm text-slate-600">{idea.estimated_time}</p>
+                          <p className="text-sm text-slate-600">{idea.estimatedTime}</p>
                         </div>
                       </div>
                       
@@ -381,7 +386,7 @@ const Home: React.FC = () => {
                           Suggested Tech Stack
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {(idea.tech_stack || []).map((tech, techIndex) => (
+                          {(idea.techStack || []).map((tech, techIndex) => (
                             <span key={techIndex} className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium">
                               {tech}
                             </span>

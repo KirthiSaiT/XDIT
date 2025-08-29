@@ -14,6 +14,14 @@ export interface IProjectIdea extends Document {
   userId?: string;
   likes?: number;
   views?: number;
+  marketValue?: string;
+  estimatedTime?: string;
+  sources?: {
+    title?: string;
+    url?: string;
+    snippet?: string;
+    source?: string;
+  }[];
 }
 
 // Interface for static methods
@@ -51,6 +59,23 @@ const ProjectIdeaSchema = new Schema<IProjectIdea>({
     enum: ['Easy', 'Medium', 'Hard'],
     required: false,
     default: 'Medium'
+  },
+  marketValue: {
+    type: String,
+    required: false,
+  },
+  estimatedTime: {
+    type: String,
+    required: false,
+  },
+  sources: {
+    type: [{
+      title: String,
+      url: String,
+      snippet: String,
+      source: String,
+    }],
+    required: false,
   },
   createdAt: {
     type: Date,
