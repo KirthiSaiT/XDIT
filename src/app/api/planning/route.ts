@@ -91,9 +91,10 @@ A list of key performance indicators to track for business success (e.g., MRR, L
             role: 'user',
             content: prompt
         }
-    ];
+    ] as const;
 
-    const perplexityResponse = await PerplexityService.chat(messages, 'sonar-reasoning-pro');
+    // ✅ FIX: Create a mutable copy of the readonly array using the spread operator
+    const perplexityResponse = await PerplexityService.chat([...messages], 'sonar-reasoning-pro');
     const plan = perplexityResponse.choices[0].message.content || "No plan generated.";
 
     await DatabaseService.updateProjectIdea(historyId, { plan });
