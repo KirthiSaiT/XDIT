@@ -3,8 +3,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { DatabaseService } from "@/backend/services/database";
 import { IProjectIdea } from "@/backend/models/ProjectIdea";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+import { PerplexityService } from "@/backend/services/perplexity";
 
 export async function GET(req: NextRequest) {
   const historyId = req.nextUrl.searchParams.get("historyId");
@@ -83,36 +82,27 @@ A list of key performance indicators to track for business success (e.g., MRR, L
 `;
 
   try {
-    // ✨ FIX: Updated model to a stable, powerful version.
-    const modelName = "gemini-1.5-pro-latest";
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
-    
-    const geminiRes = await fetch(geminiUrl, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": `${GEMINI_API_KEY}`,
+    const messages = [
+        {
+            role: 'system',
+            content: 'You are a world-class product manager, tech lead, and marketing strategist. Your goal is to provide an exhaustive and detailed plan on how to build, strategize, and market a project idea. Format your response using Markdown for clear headings, lists, and emphasis.'
         },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-        }),
-    });
+        {
+            role: 'user',
+            content: prompt
+        }
+    ];
 
-    if (!geminiRes.ok) {
-        const errorData = await geminiRes.json();
-        console.error("Gemini API Error:", errorData);
-        return NextResponse.json({ error: "Failed to generate plan from Gemini API", details: errorData }, { status: geminiRes.status });
-    }
-
-    const geminiData = await geminiRes.json();
-    const plan = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "No plan generated.";
+    const perplexityResponse = await PerplexityService.chat(messages, 'sonar-reasoning-pro');
+    const plan = perplexityResponse.choices[0].message.content || "No plan generated.";
 
     await DatabaseService.updateProjectIdea(historyId, { plan });
 
     return NextResponse.json({ plan });
 
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error calling Perplexity API:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    return NextResponse.json({ error: "Failed to generate plan from Perplexity API", details: errorMessage }, { status: 500 });
   }
 }
