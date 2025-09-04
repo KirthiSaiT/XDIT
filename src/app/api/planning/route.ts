@@ -93,8 +93,8 @@ A list of key performance indicators to track for business success (e.g., MRR, L
         }
     ] as const;
 
-    // ✅ FIX: Create a mutable copy of the readonly array using the spread operator
-    const perplexityResponse = await PerplexityService.chat([...messages], 'sonar-reasoning-pro');
+    // Use PERPLEXITY_API_KEY2 for brief generation
+    const perplexityResponse = await PerplexityService.chat([...messages], 'sonar-reasoning-pro', true);
     const plan = perplexityResponse.choices[0].message.content || "No plan generated.";
 
     await DatabaseService.updateProjectIdea(historyId, { plan });

@@ -1,18 +1,20 @@
 import axios from 'axios';
 
 const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY?.trim();
+const PERPLEXITY_API_KEY2 = process.env.PERPLEXITY_API_KEY2?.trim();
 const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 
 // Debug logging
 console.log('Perplexity API Key Status:', {
   hasKey: !!PERPLEXITY_API_KEY,
+  hasKey2: !!PERPLEXITY_API_KEY2,
   keyLength: PERPLEXITY_API_KEY?.length || 0,
   keyPrefix: PERPLEXITY_API_KEY?.substring(0, 8) + '...' || 'none'
 });
 
-if (!PERPLEXITY_API_KEY) {
+if (!PERPLEXITY_API_KEY && !PERPLEXITY_API_KEY2) {
   throw new Error(
-    'Missing PERPLEXITY_API_KEY environment variable. Please obtain your API key from your Perplexity AI settings and set it before running the app.'
+    'Missing PERPLEXITY_API_KEY or PERPLEXITY_API_KEY2 environment variable. Please obtain your API key from your Perplexity AI settings and set it before running the app.'
   );
 }
 
@@ -77,6 +79,7 @@ interface AxiosError {
 export class PerplexityService {
   static async testConnection(): Promise<boolean> {
     try {
+      const apiKey = PERPLEXITY_API_KEY || PERPLEXITY_API_KEY2;
       const response = await axios.post(
         PERPLEXITY_API_URL,
         {
@@ -87,7 +90,7 @@ export class PerplexityService {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
+            Authorization: `Bearer ${apiKey}`,
           },
         }
       );
@@ -101,11 +104,13 @@ export class PerplexityService {
 
   static async chat(
     messages: PerplexityMessage[],
-    model: string = 'sonar'
+    model: string = 'sonar',
+    useKey2: boolean = false
   ): Promise<PerplexityChatResponse> {
     try {
+      const apiKey = useKey2 ? (PERPLEXITY_API_KEY2 || PERPLEXITY_API_KEY) : (PERPLEXITY_API_KEY || PERPLEXITY_API_KEY2);
       console.log('Making request to Perplexity AI with model:', model);
-      console.log('API Key being used:', PERPLEXITY_API_KEY?.substring(0, 8) + '...');
+      console.log('Using API Key:', useKey2 ? 'KEY2' : 'KEY1', apiKey?.substring(0, 8) + '...');
       
       const response = await axios.post<PerplexityChatResponse>(
         PERPLEXITY_API_URL,
@@ -120,7 +125,7 @@ export class PerplexityService {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${PERPLEXITY_API_KEY}`,
+            Authorization: `Bearer ${apiKey}`,
           },
         }
       );
@@ -140,7 +145,7 @@ export class PerplexityService {
         console.error('401 Unauthorized: Check your API key. Raw error response:', axiosError.response?.data);
         console.error('Request headers sent:', {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${PERPLEXITY_API_KEY?.substring(0, 8)}...`
+          'Authorization': `Bearer ${(useKey2 ? PERPLEXITY_API_KEY2 : PERPLEXITY_API_KEY)?.substring(0, 8)}...`
         });
         throw new Error('Authentication failed. Please ensure your PERPLEXITY_API_KEY is correct and active. You can find it in your Perplexity AI account settings.');
       } else if (axiosError.response) {

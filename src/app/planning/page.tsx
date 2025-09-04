@@ -98,8 +98,14 @@ const LoadingState = () => (
         <div className="text-center space-y-2">
           <CardTitle className="text-2xl">Generating Your Blueprint</CardTitle>
           <CardDescription>
-            The AI is crafting a detailed plan. This may take a moment.
+            The AI is crafting a detailed plan using Perplexity AI. This may take 1-2 minutes.
           </CardDescription>
+          <div className="mt-4 space-y-1 text-xs text-muted-foreground">
+            <p>🔍 Analyzing project requirements</p>
+            <p>🏗️ Creating technical architecture</p>
+            <p>📊 Building development timeline</p>
+            <p>🚀 Crafting go-to-market strategy</p>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -118,43 +124,73 @@ const ErrorState = ({ error }: { error: string }) => (
             {error}
           </AlertDescription>
         </Alert>
-      </CardContent>
-    </Card>
-  </div>
-);
-
-const EmptyState = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
-    <Card className="w-full max-w-md">
-      <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
-        <Lightbulb className="w-12 h-12 text-primary" />
-        <div className="text-center space-y-2">
-          <CardTitle className="text-2xl">No Project Selected</CardTitle>
-          <CardDescription>
-            Please go back and select a project to generate a development plan.
-          </CardDescription>
+        <div className="mt-4 text-center">
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+            className="text-sm"
+          >
+            Try Again
+          </Button>
         </div>
       </CardContent>
     </Card>
   </div>
 );
 
+// EmptyState component removed - we'll show loading instead
+
 // --- Page Content Component ---
 
 function PlanningPageContent() {
-  const historyId = useMemo(() => {
-    if (typeof window === "undefined") {
-      return null;
-    }
-    return new URLSearchParams(window.location.search).get("historyId");
-  }, []);
-
+  const [historyId, setHistoryId] = useState<string | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
   const [idea, setIdea] = useState<Idea | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>('');
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
+
+  // Get historyId from URL parameters
+  useEffect(() => {
+    const updateHistoryId = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('historyId');
+      console.log('URL historyId detected:', id);
+      setHistoryId(id);
+    };
+    
+    // Initial check
+    updateHistoryId();
+    
+    // Listen for navigation changes
+    window.addEventListener('popstate', updateHistoryId);
+    
+    // If no historyId initially, keep checking for navigation updates
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialId = urlParams.get('historyId');
+    if (!initialId) {
+      const checkForHistoryId = () => {
+        const updatedParams = new URLSearchParams(window.location.search);
+        const updatedId = updatedParams.get('historyId');
+        if (updatedId) {
+          console.log('Updated historyId detected:', updatedId);
+          setHistoryId(updatedId);
+        }
+      };
+      
+      // Check again after a short delay in case navigation is still in progress
+      const timeout = setTimeout(checkForHistoryId, 100);
+      return () => {
+        clearTimeout(timeout);
+        window.removeEventListener('popstate', updateHistoryId);
+      };
+    }
+    
+    return () => {
+      window.removeEventListener('popstate', updateHistoryId);
+    };
+  }, []);
 
   const sections = useMemo(() => parsePlanIntoSections(plan || ''), [plan]);
 
@@ -209,31 +245,44 @@ function PlanningPageContent() {
 
   useEffect(() => {
     if (!historyId) {
-      setLoading(false);
+      // Keep loading until we get a historyId
       return;
     }
 
     const fetchPlanAndIdea = async () => {
       setLoading(true);
       setError(null);
+      console.log('Fetching plan and idea for historyId:', historyId);
+      
       try {
-        const [ideaRes, planRes] = await Promise.all([
-          fetch(`/api/ideas/${historyId}`),
-          fetch(`/api/planning?historyId=${encodeURIComponent(historyId)}`)
-        ]);
-
-        if (!ideaRes.ok || !planRes.ok) {
-          const errorData = !ideaRes.ok ? await ideaRes.json() : await planRes.json();
+        // First fetch the idea details
+        console.log('Fetching idea details...');
+        const ideaRes = await fetch(`/api/ideas/${historyId}`);
+        if (!ideaRes.ok) {
+          const errorData = await ideaRes.json();
           throw new Error(errorData.error || "Failed to fetch project data.");
         }
-
+        
         const ideaData = await ideaRes.json();
+        console.log('Idea data received:', ideaData);
+        if (ideaData.success) {
+          setIdea(ideaData.idea);
+        }
+        
+        // Then check if plan exists or needs to be generated
+        console.log('Fetching/generating plan...');
+        const planRes = await fetch(`/api/planning?historyId=${encodeURIComponent(historyId)}`);
+        if (!planRes.ok) {
+          const errorData = await planRes.json();
+          throw new Error(errorData.error || "Failed to generate project plan.");
+        }
+        
         const planData = await planRes.json();
-
-        if (ideaData.success) setIdea(ideaData.idea);
+        console.log('Plan data received, length:', planData.plan?.length || 0);
         setPlan(planData.plan);
 
       } catch (e: unknown) {
+        console.error('Error in fetchPlanAndIdea:', e);
         handleError(e);
       } finally {
         setLoading(false);
@@ -245,7 +294,7 @@ function PlanningPageContent() {
 
   if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
-  if (!historyId || !idea || !plan) return <EmptyState />;
+  if (!historyId || !idea || !plan) return <LoadingState />; // Show loading instead of empty state
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">

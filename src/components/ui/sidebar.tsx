@@ -9,7 +9,9 @@ import {
   ChevronLeft, 
   ChevronRight,
   Trash2,
-  Eye
+  Eye,
+  FileText,
+  Loader2
 } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 import { ProjectIdeaDisplay } from '@/types'
@@ -26,6 +28,7 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
   const [ideas, setIdeas] = useState<ProjectIdeaDisplay[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedIdea, setSelectedIdea] = useState<string | null>(null)
+  const [generatingBrief, setGeneratingBrief] = useState<string | null>(null)
 
   const fetchUserHistory = useCallback(async () => {
     if (!user) return
@@ -72,7 +75,15 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
 
   const handleBriefClick = (e: React.MouseEvent, ideaId: string) => {
     e.stopPropagation()
+    setGeneratingBrief(ideaId)
+    
+    // Navigate directly to planning page - let it handle the generation
     router.push(`/planning?historyId=${ideaId}`)
+    
+    // Reset the generating state after a short delay
+    setTimeout(() => {
+      setGeneratingBrief(null)
+    }, 1000)
   }
 
   const getDifficultyColor = (difficulty: string) => {
@@ -188,8 +199,20 @@ export function HistorySidebar({ isOpen, onToggle, onSelectIdea }: HistorySideba
                     <div className="flex justify-end pt-2">
                         <button 
                             onClick={(e) => handleBriefClick(e, idea._id)}
-                            className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors">
-                            Brief
+                            disabled={generatingBrief === idea._id}
+                            className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                        >
+                            {generatingBrief === idea._id ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <span>Generating...</span>
+                              </>
+                            ) : (
+                              <>
+                                <FileText className="h-3 w-3" />
+                                <span>Brief</span>
+                              </>
+                            )}
                         </button>
                     </div>
                   </div>
