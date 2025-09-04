@@ -21,71 +21,51 @@ export async function GET(req: NextRequest) {
   }
 
   const prompt = `
-You are a world-class product manager, tech lead, and marketing strategist. Given the following project idea, provide an exhaustive and detailed plan on how to build, strategize, and market it. Format your response using Markdown for clear headings, lists, and emphasis.
+As an experienced tech lead and startup advisor, analyze this project idea and provide a clear, conversational development plan without any markdown formatting or thinking tags:
 
-**Project Idea:** ${idea.title}
+**Project:** ${idea.title}
 **Description:** ${idea.description}
-**Suggested Tech Stack:** ${idea.techStack?.join(', ') || 'Not specified'}
+**Tech Stack:** ${idea.techStack?.join(', ') || 'Not specified'}
 **Difficulty:** ${idea.difficulty}
 
-Provide a comprehensive and actionable plan covering the following sections in great detail:
+Provide a practical plan in these sections:
 
-# 1. Technical Architecture
-## High-level Overview
-A diagram or a textual description of the overall system architecture (e.g., microservices, monolithic).
-## Frontend
-Recommended framework (e.g., React, Vue, Svelte) with reasons, key libraries for state management, UI components, and testing.
-## Backend
-Recommended framework (e.g., Node.js with Express, Python with Django/FastAPI) with reasons, API design principles (e.g., REST, GraphQL), and authentication strategy.
-## Database
-Recommended database (e.g., PostgreSQL, MongoDB, Firebase) with reasons, and a sample schema for the main collections/tables.
-## Third-party Services
-Key third-party APIs and services to integrate (e.g., for payments, emails, analytics).
-## Deployment & Hosting
-Recommended cloud provider (e.g., AWS, Vercel, Netlify) and a CI/CD pipeline setup.
+## Problem & Solution
+First, clearly explain the core problem this project solves. Then describe your proposed solution and why it's needed in the market.
 
-# 2. Team Roles & Responsibilities
-## Core Team (MVP)
-A list of essential roles for the initial phase with their primary responsibilities.
-## Extended Team (Post-MVP)
-Roles to hire as the product grows.
-## Skills Matrix
-A brief overview of the key skills required for the technical team.
+## Technical Requirements
 
-# 3. Development Timeline & Milestones
-## Phase 1: MVP (0-3 Months)
-A detailed breakdown of features for the MVP, with weekly sprints or milestones.
-## Phase 2: Core Features (3-6 Months)
-Key features to be added after the MVP launch.
-## Phase 3: V2 & Scaling (6-12 Months)
-Long-term features and infrastructure scaling plans.
+### Frontend
+List the recommended frontend technologies, frameworks, and libraries.
 
-# 4. Go-to-Market (GTM) Strategy
-## Target Audience
-Detailed user personas with their pain points and motivations.
-## Pricing Strategy
-A tiered pricing model (e.g., Free, Pro, Enterprise) with features for each tier.
-## Marketing Channels
-A mix of organic (content marketing, SEO, social media) and paid (PPC, social media ads) with a suggested budget allocation.
-## Launch Plan
-A step-by-step plan for a successful product launch (e.g., pre-launch, launch day, post-launch activities).
+### Backend
+Specify the backend technologies, APIs, and server requirements.
 
-# 5. Growth & Scaling Strategy
-## User Acquisition
-Strategies to acquire the first 100, 1,000, and 10,000 users.
-## User Retention
-Strategies to keep users engaged and reduce churn.
-## Product Roadmap
-A long-term product roadmap with potential new features and integrations.
-## Key Metrics (KPIs)
-A list of key performance indicators to track for business success (e.g., MRR, LTV, CAC, Churn Rate).
-`;
+### Database
+Recommend database solutions and data storage approaches.
+
+### Additional Tools & APIs
+List any third-party services, API keys needed (payment, AI, maps, etc.), and development tools.
+
+### AI/ML Components
+If applicable, specify the type of models needed, training approaches, and ML tools required.
+
+## Development Plan
+Outline the MVP features for the first 2-3 months, followed by core features for the next 3-6 months. Include key technical challenges and solutions.
+
+## Market & Revenue Analysis
+Provide realistic market size data, growth potential, revenue projections for the first year, and monetization strategies. Include competition analysis.
+
+## Business Viability Assessment
+Assess the startup potential, required funding/investment, key success metrics, and main risk factors.
+
+Write in a conversational tone as if explaining to a colleague. Avoid markdown symbols, bullet points with asterisks, and technical jargon. Use clear, simple language and organize information logically.`;
 
   try {
     const messages = [
         {
             role: 'system',
-            content: 'You are a world-class product manager, tech lead, and marketing strategist. Your goal is to provide an exhaustive and detailed plan on how to build, strategize, and market a project idea. Format your response using Markdown for clear headings, lists, and emphasis.'
+            content: 'You are a practical tech lead and startup advisor. Provide clear, conversational development plans without any markdown formatting, thinking tags, or technical symbols. Write as if explaining to a colleague in plain English. Do not use asterisks, bullet points with symbols, or any markdown. Organize content with clear headings and readable paragraphs. Never include thinking process or meta-commentary - provide direct, actionable advice only.'
         },
         {
             role: 'user',
