@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Search, Lightbulb, Sparkles, ArrowRight, UserPlus, Loader2, ExternalLink, Clock, Zap, Globe, History, DollarSign } from 'lucide-react'
+import Image from 'next/image'
 import {
   SignedIn,
   SignedOut,
@@ -116,17 +117,17 @@ const Home: React.FC = () => {
     {
       icon: <Search className="w-7 h-7 text-white" />,
       title: 'Real-Time Market Research',
-      desc: 'AI-powered web research to identify current market trends, opportunities, and gaps in real-time.',
+      desc: 'Advanced AI-powered web research to identify current market trends, opportunities, and gaps in real-time using Xdit intelligence.',
     },
     {
       icon: <Lightbulb className="w-7 h-7 text-white" />,
       title: 'Intelligent Idea Generation',
-      desc: 'Generate innovative, viable SaaS project ideas based on comprehensive market research and analysis.',
+      desc: 'Generate innovative, viable SaaS project ideas based on comprehensive market research and Xdit AI analysis.',
     },
     {
       icon: <Sparkles className="w-7 h-7 text-white" />,
       title: 'Research-Backed Insights',
-      desc: 'Every idea comes with detailed research sources, market analysis, and technical specifications.',
+      desc: 'Every idea comes with detailed research sources, market analysis, and technical specifications powered by Xdit.',
     },
   ]
 
@@ -136,10 +137,16 @@ const Home: React.FC = () => {
       <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-blue-500/20">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-lg overflow-hidden shadow-md shadow-blue-500/20">
+              <Image 
+                src="/xdit_logo.jpeg" 
+                alt="Xdit Logo" 
+                width={40} 
+                height={40} 
+                className="w-full h-full object-cover"
+              />
             </div>
-            <span className="text-2xl font-bold text-slate-900">xxit</span>
+            <span className="text-2xl font-bold text-slate-900">Xdit</span>
           </div>
           <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
             <Link 
@@ -196,7 +203,7 @@ const Home: React.FC = () => {
         <div className="text-center mb-20">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-sm font-semibold mb-6">
             <Lightbulb className="w-5 h-5 mr-2" />
-            Powered by Perplexity AI Sonar & Next.js
+            Powered by Xdit AI Research Engine
           </div>
 
           <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
@@ -207,10 +214,11 @@ const Home: React.FC = () => {
             </span>
           </h1>
 
-          <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto">
-            Transform your concepts into innovative SaaS solutions. Our AI-powered platform researches the web in real-time, 
-            analyzes market trends, and generates viable project ideas with detailed research sources and technical specifications.
-          </p>
+            <p className="text-lg text-slate-600 mb-12 max-w-3xl mx-auto">
+              Transform your concepts into innovative SaaS solutions with Xdit&apos;s advanced AI research engine. 
+              Our platform analyzes real-time market data, identifies emerging opportunities, and generates 
+              comprehensive project blueprints with detailed technical specifications and business insights.
+            </p>
         </div>
 
         {/* Input Form */}
@@ -240,9 +248,9 @@ const Home: React.FC = () => {
                     className="px-5 py-3.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 flex items-center space-x-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? (
-                      <>
+                      <>  
                         <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Analyzing...</span>
+                        <span>Researching...</span>
                       </>
                     ) : (
                       <>
@@ -443,13 +451,13 @@ const Home: React.FC = () => {
             ) : isLoading ? (
               <div className="text-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-                <p className="text-slate-600">Researching with Perplexity AI Sonar...</p>
-                <p className="text-sm text-slate-500 mt-2">This may take 1-2 minutes for comprehensive research and idea generation</p>
+                      <p className="text-slate-600">Researching with Xdit AI Engine...</p>
+                <p className="text-sm text-slate-500 mt-2">Xdit AI is performing comprehensive research and idea generation</p>
                 <div className="mt-4 space-y-2 text-xs text-slate-400">
-                  <p>🔍 Researching market trends and opportunities</p>
+                  <p>🔍 Researching market trends with Xdit intelligence</p>
                   <p>💡 Generating 5 innovative project ideas</p>
-                  <p>📊 Analyzing market gaps and solutions</p>
-                  <p>🔗 Collecting research sources and links</p>
+                  <p>📊 Analyzing market gaps and opportunities</p>
+                  <p>🔗 Collecting research sources and validation data</p>
                 </div>
               </div>
             ) : null}
@@ -490,7 +498,7 @@ const Home: React.FC = () => {
       <footer className="border-t border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-between items-center text-slate-500 text-sm">
-            <p>&copy; {new Date().getFullYear()} xxit. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Xdit. All rights reserved.</p>
             <div className="flex space-x-6">
               <a href="#" className="hover:text-blue-600">
                 Privacy Policy

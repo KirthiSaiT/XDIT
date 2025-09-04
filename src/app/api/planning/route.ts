@@ -21,51 +21,66 @@ export async function GET(req: NextRequest) {
   }
 
   const prompt = `
-As an experienced tech lead and startup advisor, analyze this project idea and provide a clear, conversational development plan without any markdown formatting or thinking tags:
+As an experienced tech lead, startup advisor, and business strategist, analyze this project idea and provide a comprehensive business intelligence report without any markdown formatting or thinking tags:
 
 **Project:** ${idea.title}
 **Description:** ${idea.description}
 **Tech Stack:** ${idea.techStack?.join(', ') || 'Not specified'}
 **Difficulty:** ${idea.difficulty}
 
-Provide a practical plan in these sections:
+Provide a detailed analysis in these sections:
 
 ## Problem & Solution
-First, clearly explain the core problem this project solves. Then describe your proposed solution and why it's needed in the market.
+Clearly explain the core problem this project solves and describe your proposed solution with market positioning.
 
 ## Technical Requirements
 
 ### Frontend
-List the recommended frontend technologies, frameworks, and libraries.
+List recommended frontend technologies, frameworks, and libraries with reasoning.
 
 ### Backend
-Specify the backend technologies, APIs, and server requirements.
+Specify backend technologies, APIs, server requirements, and scalability considerations.
 
 ### Database
-Recommend database solutions and data storage approaches.
+Recommend database solutions, data storage approaches, and data architecture.
 
 ### Additional Tools & APIs
-List any third-party services, API keys needed (payment, AI, maps, etc.), and development tools.
+List third-party services, API keys needed, development tools, and integration requirements.
 
 ### AI/ML Components
-If applicable, specify the type of models needed, training approaches, and ML tools required.
+If applicable, specify model types, training approaches, ML tools, and data requirements.
 
-## Development Plan
-Outline the MVP features for the first 2-3 months, followed by core features for the next 3-6 months. Include key technical challenges and solutions.
+## Patent Analysis & IP Protection
+Analyze potential patent conflicts, existing patents in this space, intellectual property opportunities, trademark considerations, and IP protection strategies.
+
+## Competitive Landscape Analysis
+Identify direct competitors, indirect competitors, competitive advantages, market differentiation strategies, and competitive threats. Include specific company names and their approaches.
+
+## Legal & Compliance Requirements
+Outline regulatory compliance needs, data privacy requirements (GDPR, CCPA), terms of service considerations, liability concerns, and legal entity recommendations.
+
+## Fundraising Strategy
+Explain how much money you will need to start and grow this business in India, using simple rupee amounts (like 10 lakhs for initial setup, 50 lakhs for growth). Describe where to find investors in India (angel investors, venture capital firms, government schemes like Startup India), what percentage of company to give away, and how to convince Indian investors. Include realistic timelines for raising money and what investors will want to see before investing in Indian startups.
+
+## Go-to-Market & Launch Strategy
+Create a practical launch plan for the Indian market. Explain the best ways to reach Indian customers, which online platforms work best in India (like WhatsApp Business, Instagram, Facebook), how to price the product affordably for Indian customers, and which Indian cities to target first. Include partnerships with Indian companies, influencer marketing strategies that work in India, and how to handle customer support in multiple Indian languages.
 
 ## Market & Revenue Analysis
-Provide realistic market size data, growth potential, revenue projections for the first year, and monetization strategies. Include competition analysis.
+Provide a simple analysis of the Indian market opportunity. Explain how big the market is in India, what Indian customers are willing to pay in rupees, realistic monthly and yearly revenue expectations in Indian rupees, and how similar Indian startups are making money. Include current trends in the Indian digital market, popular payment methods Indians prefer (UPI, Paytm, etc.), and seasonal buying patterns in India.
 
-## Business Viability Assessment
-Assess the startup potential, required funding/investment, key success metrics, and main risk factors.
+## Risk Assessment & Mitigation
+Identify the main challenges of building this business in India. Explain competition from other Indian companies, regulatory hurdles with Indian government policies, technical challenges with Indian internet infrastructure, and financial risks. Provide simple solutions for each problem that make sense for the Indian market.
 
-Write in a conversational tone as if explaining to a colleague. Avoid markdown symbols, bullet points with asterisks, and technical jargon. Use clear, simple language and organize information logically.`;
+## Success Metrics & KPIs
+Define simple success measurements that matter for Indian startups. Explain what numbers to track (like monthly users, revenue in rupees, customer satisfaction), realistic growth targets for Indian market, and when to consider the startup successful. Use Indian startup examples and benchmarks that entrepreneurs can understand and relate to.
+
+Write in a friendly, conversational tone using simple language. Include real examples of successful Indian startups in similar industries, current market trends in India (like UPI adoption, smartphone penetration, digital payment growth), and practical advice based on the ground reality of doing business in India. Avoid all technical jargon, business acronyms, and complex financial terms. Use rupee amounts that make sense for Indian entrepreneurs and reference real Indian companies and market conditions.`;
 
   try {
     const messages = [
         {
             role: 'system',
-            content: 'You are a practical tech lead and startup advisor. Provide clear, conversational development plans without any markdown formatting, thinking tags, or technical symbols. Write as if explaining to a colleague in plain English. Do not use asterisks, bullet points with symbols, or any markdown. Organize content with clear headings and readable paragraphs. Never include thinking process or meta-commentary - provide direct, actionable advice only.'
+            content: 'You are a helpful business advisor who explains things in simple, clear language that any entrepreneur can understand. Avoid technical jargon, business acronyms (like ARR, MRR, CAC, LTV, etc.), and complex terminology. Write as if talking to a friend who is starting their first business. Use simple words, real examples, and practical advice. For financial information, always use Indian Rupees (INR) and explain costs in lakhs/crores that Indians understand. Reference real Indian companies, current Indian market trends, and practical challenges faced by Indian startups. Make everything conversational and easy to read.'
         },
         {
             role: 'user',

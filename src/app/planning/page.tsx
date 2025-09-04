@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Loader2,
   ServerCrash,
@@ -21,15 +22,22 @@ import {
   Share2,
   UserPlus,
   History,
-  FileDown
+  FileDown,
+  Shield,
+  Users2,
+  DollarSign,
+  Rocket,
+  AlertTriangle,
+  BarChart3,
+  Gavel,
+  Eye
 } from "lucide-react";
 import {
   SignedIn,
   SignedOut,
   SignInButton,
   SignUpButton,
-  UserButton,
-  useUser,
+  UserButton
 } from '@clerk/nextjs';
 
 // shadcn/ui imports
@@ -62,14 +70,22 @@ interface Section {
 const SECTION_ICONS: { [key: string]: React.ReactNode } = {
   "Problem & Solution": <Lightbulb className="w-5 h-5" />,
   "Technical Requirements": <Component className="w-5 h-5" />,
+  "Patent Analysis": <Shield className="w-5 h-5" />,
+  "Competitive Landscape": <Users2 className="w-5 h-5" />,
+  "Legal & Compliance": <Gavel className="w-5 h-5" />,
+  "Fundraising Strategy": <DollarSign className="w-5 h-5" />,
+  "Go-to-Market": <Rocket className="w-5 h-5" />,
+  "Launch Strategy": <Rocket className="w-5 h-5" />,
+  "Development Roadmap": <GanttChartSquare className="w-5 h-5" />,
+  "Market & Revenue": <TrendingUp className="w-5 h-5" />,
+  "Risk Assessment": <AlertTriangle className="w-5 h-5" />,
+  "Success Metrics": <BarChart3 className="w-5 h-5" />,
+  "Business Viability": <Target className="w-5 h-5" />,
   "Frontend": <Component className="w-5 h-5" />,
   "Backend": <Users className="w-5 h-5" />,
   "Database": <GanttChartSquare className="w-5 h-5" />,
   "Additional Tools": <Zap className="w-5 h-5" />,
   "AI/ML Components": <BrainCircuit className="w-5 h-5" />,
-  "Development Plan": <GanttChartSquare className="w-5 h-5" />,
-  "Market & Revenue": <TrendingUp className="w-5 h-5" />,
-  "Business Viability": <Target className="w-5 h-5" />,
   "default": <BrainCircuit className="w-5 h-5" />
 };
 
@@ -77,6 +93,7 @@ const SECTION_ICONS: { [key: string]: React.ReactNode } = {
 const getSubsectionIcon = (subsectionTitle: string): React.ReactNode => {
   const title = subsectionTitle.toLowerCase();
   
+  // Technical icons
   if (title.includes('frontend') || title.includes('client') || title.includes('ui') || title.includes('react') || title.includes('vue') || title.includes('angular')) {
     return <Component className="w-4 h-4 text-blue-600" />;
   }
@@ -86,6 +103,31 @@ const getSubsectionIcon = (subsectionTitle: string): React.ReactNode => {
   if (title.includes('database') || title.includes('db') || title.includes('storage') || title.includes('mongo') || title.includes('sql') || title.includes('postgres')) {
     return <GanttChartSquare className="w-4 h-4 text-purple-600" />;
   }
+  
+  // Business & Legal icons
+  if (title.includes('patent') || title.includes('intellectual property') || title.includes('ip') || title.includes('trademark')) {
+    return <Shield className="w-4 h-4 text-amber-600" />;
+  }
+  if (title.includes('competitor') || title.includes('competitive') || title.includes('competition') || title.includes('market position')) {
+    return <Users2 className="w-4 h-4 text-red-600" />;
+  }
+  if (title.includes('legal') || title.includes('compliance') || title.includes('regulatory') || title.includes('gdpr') || title.includes('terms')) {
+    return <Gavel className="w-4 h-4 text-slate-600" />;
+  }
+  if (title.includes('funding') || title.includes('investment') || title.includes('fundraising') || title.includes('valuation') || title.includes('investor')) {
+    return <DollarSign className="w-4 h-4 text-green-600" />;
+  }
+  if (title.includes('launch') || title.includes('go-to-market') || title.includes('marketing') || title.includes('customer acquisition')) {
+    return <Rocket className="w-4 h-4 text-orange-600" />;
+  }
+  if (title.includes('risk') || title.includes('threat') || title.includes('mitigation') || title.includes('challenge')) {
+    return <AlertTriangle className="w-4 h-4 text-red-600" />;
+  }
+  if (title.includes('metric') || title.includes('kpi') || title.includes('success') || title.includes('performance')) {
+    return <BarChart3 className="w-4 h-4 text-blue-600" />;
+  }
+  
+  // General business icons
   if (title.includes('additional') || title.includes('tools') || title.includes('api') || title.includes('service') || title.includes('integration')) {
     return <Zap className="w-4 h-4 text-orange-600" />;
   }
@@ -100,6 +142,24 @@ const getSubsectionIcon = (subsectionTitle: string): React.ReactNode => {
   }
   
   return <Sparkles className="w-4 h-4 text-slate-600" />;
+};
+
+// Helper function to get section priority and styling
+const getSectionPriority = (title: string) => {
+  const criticalSections = ['Problem & Solution', 'Technical Requirements', 'Competitive Landscape'];
+  const businessSections = ['Fundraising Strategy', 'Go-to-Market', 'Launch Strategy', 'Market & Revenue'];
+  const legalSections = ['Patent Analysis', 'Legal & Compliance', 'Risk Assessment'];
+  
+  if (criticalSections.some(section => title.includes(section))) {
+    return { priority: 'critical', gradient: 'from-red-500 to-pink-500', bg: 'from-red-50 to-pink-50' };
+  }
+  if (businessSections.some(section => title.includes(section))) {
+    return { priority: 'business', gradient: 'from-green-500 to-emerald-500', bg: 'from-green-50 to-emerald-50' };
+  }
+  if (legalSections.some(section => title.includes(section))) {
+    return { priority: 'legal', gradient: 'from-amber-500 to-orange-500', bg: 'from-amber-50 to-orange-50' };
+  }
+  return { priority: 'standard', gradient: 'from-blue-500 to-indigo-500', bg: 'from-blue-50 to-indigo-50' };
 };
 
 // --- Helper Functions ---
@@ -215,15 +275,16 @@ const LoadingState = () => (
         </div>
         <div className="text-center space-y-4">
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Generating Your Blueprint
+            Generating Comprehensive Business Intelligence
           </CardTitle>
           <CardDescription className="text-lg text-slate-600 max-w-md">
-            Our AI is crafting a comprehensive project plan using advanced market research. This may take 1-2 minutes.
+            Xdit AI is crafting a comprehensive business intelligence report using advanced market research, 
+            patent analysis, competitive intelligence, and fundraising strategies. This may take 2-3 minutes.
           </CardDescription>
           <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-slate-500">
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-              <span>Analyzing requirements</span>
+              <span>Processing requirements</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -231,11 +292,27 @@ const LoadingState = () => (
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-              <span>Market research</span>
+              <span>Patent research</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-              <span>Revenue analysis</span>
+              <span>Competitor analysis</span>
+            </div>
+            <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
+              <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+              <span>Legal compliance</span>
+            </div>
+            <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+              <span>Fundraising strategy</span>
+            </div>
+            <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
+              <span>Launch planning</span>
+            </div>
+            <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
+              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+              <span>Risk assessment</span>
             </div>
           </div>
         </div>
@@ -292,10 +369,16 @@ const PlanningNavbar = ({ onExportPDF }: { onExportPDF?: () => void }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-all duration-300">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-blue-500/25 group-hover:shadow-blue-500/40 transition-all duration-300">
+              <Image 
+                src="/xdit_logo.jpeg" 
+                alt="Xdit Logo" 
+                width={40} 
+                height={40} 
+                className="w-full h-full object-cover"
+              />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">xxit</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">Xdit</span>
           </Link>
           <Separator orientation="vertical" className="h-6" />
           <div className="flex items-center space-x-2 text-slate-600">
@@ -494,7 +577,7 @@ function PlanningPageContent() {
           }).join('')}
           
           <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 12px;">
-            Generated by xxit - SaaS Idea Generator | ${new Date().toLocaleDateString()}
+            Generated by Xdit - Advanced SaaS Blueprint Generator | ${new Date().toLocaleDateString()}
           </div>
         </body>
         </html>
@@ -752,7 +835,7 @@ function PlanningPageContent() {
                   <CardContent className="pt-0">
                     <ScrollArea className="h-[calc(100vh-300px)]">
                       <div className="space-y-2">
-                        {sections.map((section, index) => (
+                        {sections.map((section, sectionIdx) => (
                           <Button
                             key={section.title}
                             variant={activeSection === section.title ? "default" : "ghost"}
@@ -783,7 +866,7 @@ function PlanningPageContent() {
                                   <p className={`text-xs truncate mt-1 ${
                                     activeSection === section.title ? 'text-blue-100' : 'text-slate-500'
                                   }`}>
-                                    Section {index + 1}
+                                    Section {sectionIdx + 1}
                                   </p>
                                 </div>
                                 <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${
@@ -802,37 +885,62 @@ function PlanningPageContent() {
               {/* Main Content Area */}
               <div className="lg:col-span-8 xl:col-span-9">
                 <div className="space-y-8">
-                  {sections.map(({ title, content }, sectionIndex) => (
-                    <Card
-                      key={title}
-                      id={title.toLowerCase().replace(/\s/g, '-')}
-                      ref={(el) => { sectionRefs.current[sectionIndex] = el; }}
-                      className="scroll-mt-24 border-0 shadow-xl overflow-hidden bg-white/80 backdrop-blur hover:shadow-2xl transition-all duration-300 group"
-                    >
-                      <CardHeader className="bg-gradient-to-r from-slate-50 via-blue-50/50 to-indigo-50/50 border-b border-slate-100">
-                        <CardTitle className="flex items-center space-x-4 text-2xl">
-                          <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg group-hover:shadow-xl transition-all duration-300">
-                            <div className="text-white">
-                              {Object.entries(SECTION_ICONS).find(([key]) => 
-                                title.includes(key)
-                              )?.[1] || SECTION_ICONS["default"]}
+                  {sections.map(({ title, content }, sectionIndex) => {
+                    const sectionPriority = getSectionPriority(title);
+                    return (
+                      <Card
+                        key={title}
+                        id={title.toLowerCase().replace(/\s/g, '-')}
+                        ref={(el) => { sectionRefs.current[sectionIndex] = el; }}
+                        className={`scroll-mt-24 border-0 shadow-xl overflow-hidden bg-white/80 backdrop-blur hover:shadow-2xl transition-all duration-300 group`}
+                      >
+                        <CardHeader className={`bg-gradient-to-r ${sectionPriority.bg} border-b border-slate-100 relative overflow-hidden`}>
+                          <CardTitle className="flex items-center space-x-4 text-2xl relative z-10">
+                            <div className={`p-3 rounded-xl bg-gradient-to-br ${sectionPriority.gradient} shadow-lg transition-all duration-300`}>
+                              <div className="text-white">
+                                {Object.entries(SECTION_ICONS).find(([key]) => 
+                                  title.includes(key)
+                                )?.[1] || SECTION_ICONS["default"]}
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex-1">
-                            <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent font-bold">
-                              {title}
-                            </span>
-                            <div className="flex items-center space-x-2 mt-2">
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                Section {sectionIndex + 1}
-                              </Badge>
-                              <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200">
-                                AI Generated
-                              </Badge>
+                            <div className="flex-1">
+                              <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent font-bold transition-all duration-300">
+                                {title}
+                              </span>
+                              <div className="flex items-center space-x-2 mt-2">
+                                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                                  Section {sectionIndex + 1}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200">
+                                  AI Generated
+                                </Badge>
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs border-2 font-semibold ${
+                                    sectionPriority.priority === 'critical' ? 'bg-red-50 text-red-600 border-red-200' :
+                                    sectionPriority.priority === 'business' ? 'bg-green-50 text-green-600 border-green-200' :
+                                    sectionPriority.priority === 'legal' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                    'bg-blue-50 text-blue-600 border-blue-200'
+                                  }`}
+                                >
+                                  {sectionPriority.priority.toUpperCase()}
+                                </Badge>
+                              </div>
                             </div>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
+                            
+                            {/* Section Stats */}
+                            <div className="hidden lg:flex flex-col items-center space-y-1">
+                              <div className="flex items-center space-x-1 text-sm text-slate-500">
+                                <Eye className="w-4 h-4" />
+                                <span>{Math.floor(Math.random() * 50) + 10}% read</span>
+                              </div>
+                              <div className="flex items-center space-x-1 text-sm text-slate-500">
+                                <Clock className="w-4 h-4" />
+                                <span>{Math.floor(Math.random() * 5) + 2} min</span>
+                              </div>
+                            </div>
+                          </CardTitle>
+                        </CardHeader>
                       <CardContent className="p-0">
                         <ScrollArea className="h-auto max-h-[700px]">
                           <div className="p-8">
@@ -840,53 +948,59 @@ function PlanningPageContent() {
                               {(() => {
                                 const subsections = parseSubsections(content);
                                 
-                                return subsections.map((subsection, subIndex) => {
-                                  if (subsection.title) {
-                                    // This is a subsection with a title
-                                    return (
-                                      <div key={subIndex} className="mb-8">
-                                        <div className="flex items-center space-x-3 mb-4">
-                                          <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
-                                            {getSubsectionIcon(subsection.title)}
+                                  return subsections.map((subsection, subIndex) => {
+                                    if (subsection.title) {
+                                      // This is a subsection with a title
+                                      return (
+                                        <div key={subIndex} className="mb-8">
+                                          <div className="flex items-center space-x-3 mb-4 group/subsection">
+                                            <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg transition-all duration-300">
+                                              {getSubsectionIcon(subsection.title)}
+                                            </div>
+                                            <h3 className="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 flex-1 transition-colors duration-300">
+                                              {subsection.title}
+                                            </h3>
                                           </div>
-                                          <h3 className="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 flex-1">
-                                            {subsection.title}
-                                          </h3>
+                                          <div className="ml-6 pl-4 border-l-2 border-blue-100 hover:border-blue-300 transition-colors duration-300">
+                                            {subsection.content.split('\n\n').map((paragraph, pIndex) => (
+                                              paragraph.trim() && (
+                                                <p 
+                                                  key={pIndex} 
+                                                  className="text-base text-slate-700 leading-relaxed mb-4 hover:text-slate-900 transition-colors duration-200"
+                                                >
+                                                  {paragraph.trim()}
+                                                </p>
+                                              )
+                                            ))}
+                                          </div>
                                         </div>
-                                        <div className="ml-6 pl-4 border-l-2 border-blue-100">
+                                      );
+                                    } else {
+                                      // This is general content without a subsection title
+                                      return (
+                                        <div key={subIndex} className="mb-6">
                                           {subsection.content.split('\n\n').map((paragraph, pIndex) => (
                                             paragraph.trim() && (
-                                              <p key={pIndex} className="text-base text-slate-700 leading-relaxed mb-4">
+                                              <p 
+                                                key={pIndex} 
+                                                className="text-base text-slate-700 leading-relaxed mb-4 hover:text-slate-900 transition-colors duration-200"
+                                              >
                                                 {paragraph.trim()}
                                               </p>
                                             )
                                           ))}
                                         </div>
-                                      </div>
-                                    );
-                                  } else {
-                                    // This is general content without a subsection title
-                                    return (
-                                      <div key={subIndex} className="mb-6">
-                                        {subsection.content.split('\n\n').map((paragraph, pIndex) => (
-                                          paragraph.trim() && (
-                                            <p key={pIndex} className="text-base text-slate-700 leading-relaxed mb-4">
-                                              {paragraph.trim()}
-                                            </p>
-                                          )
-                                        ))}
-                                      </div>
-                                    );
-                                  }
-                                });
-                              })()
-                              }
+                                      );
+                                    }
+                                  });
+                              })()}
                             </div>
                           </div>
                         </ScrollArea>
                       </CardContent>
                     </Card>
-                  ))}
+                  );
+                })}
                 </div>
               </div>
             </div>
