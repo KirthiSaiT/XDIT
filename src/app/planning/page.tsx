@@ -18,10 +18,10 @@ import {
   ChevronRight,
   BookOpen,
   ArrowLeft,
-  Download,
   Share2,
   UserPlus,
-  History
+  History,
+  FileDown
 } from "lucide-react";
 import {
   SignedIn,
@@ -73,6 +73,35 @@ const SECTION_ICONS: { [key: string]: React.ReactNode } = {
   "default": <BrainCircuit className="w-5 h-5" />
 };
 
+// Helper function to get icons for subsections
+const getSubsectionIcon = (subsectionTitle: string): React.ReactNode => {
+  const title = subsectionTitle.toLowerCase();
+  
+  if (title.includes('frontend') || title.includes('client') || title.includes('ui') || title.includes('react') || title.includes('vue') || title.includes('angular')) {
+    return <Component className="w-4 h-4 text-blue-600" />;
+  }
+  if (title.includes('backend') || title.includes('server') || title.includes('api') || title.includes('node') || title.includes('express') || title.includes('django')) {
+    return <Users className="w-4 h-4 text-green-600" />;
+  }
+  if (title.includes('database') || title.includes('db') || title.includes('storage') || title.includes('mongo') || title.includes('sql') || title.includes('postgres')) {
+    return <GanttChartSquare className="w-4 h-4 text-purple-600" />;
+  }
+  if (title.includes('additional') || title.includes('tools') || title.includes('api') || title.includes('service') || title.includes('integration')) {
+    return <Zap className="w-4 h-4 text-orange-600" />;
+  }
+  if (title.includes('ai') || title.includes('ml') || title.includes('machine learning') || title.includes('artificial intelligence') || title.includes('model')) {
+    return <BrainCircuit className="w-4 h-4 text-indigo-600" />;
+  }
+  if (title.includes('mvp') || title.includes('feature') || title.includes('development') || title.includes('phase') || title.includes('milestone')) {
+    return <Target className="w-4 h-4 text-teal-600" />;
+  }
+  if (title.includes('market') || title.includes('revenue') || title.includes('monetization') || title.includes('pricing') || title.includes('business')) {
+    return <TrendingUp className="w-4 h-4 text-emerald-600" />;
+  }
+  
+  return <Sparkles className="w-4 h-4 text-slate-600" />;
+};
+
 // --- Helper Functions ---
 
 const getDifficultyVariant = (difficulty: string) => {
@@ -88,7 +117,7 @@ const parsePlanIntoSections = (planText: string): Section[] => {
   if (!planText) return [];
   
   // Clean up the plan text first
-  let cleanedText = planText
+  const cleanedText = planText
     .replace(/<think>[\s\S]*?<\/think>/g, '') // Remove thinking tags
     .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
     .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
@@ -118,10 +147,57 @@ const parsePlanIntoSections = (planText: string): Section[] => {
       .filter(line => line.length > 0)
       .join('\n\n');
     
+    // Special handling for Technical Requirements section to ensure proper subsection formatting
+    if (title.toLowerCase().includes('technical') && title.toLowerCase().includes('requirements')) {
+      // Ensure common tech stack categories are properly formatted as subsections if not already
+      const techCategories = ['Frontend', 'Backend', 'Database', 'Additional Tools', 'AI/ML Components'];
+      
+      techCategories.forEach(category => {
+        const categoryRegex = new RegExp(`(?:^|\n)(${category}[^\n]*?)(?=\n|$)`, 'i');
+        if (categoryRegex.test(content) && !content.includes(`### ${category}`)) {
+          content = content.replace(categoryRegex, `\n### ${category}\n`);
+        }
+      });
+    }
+    
     const icon = Object.entries(SECTION_ICONS).find(([key]) => title.includes(key))?.[1] || SECTION_ICONS["default"];
     structuredSections.push({ title, content, icon });
   }
   return structuredSections;
+};
+
+// Helper function to parse subsections within content
+const parseSubsections = (content: string) => {
+  const subsectionRegex = /###\s(.+)/g;
+  const parts = content.split(subsectionRegex);
+  
+  if (parts.length <= 1) {
+    return [{ title: '', content: content }];
+  }
+  
+  const subsections = [];
+  // First part before any subsection
+  if (parts[0].trim()) {
+    subsections.push({ title: '', content: parts[0].trim() });
+  }
+  
+  // Process subsections
+  for (let i = 1; i < parts.length; i += 2) {
+    const title = parts[i]?.trim() || '';
+    let content = parts[i + 1]?.trim() || '';
+    
+    // Further clean the content - remove any remaining markdown
+    content = content
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
+      .replace(/^\s*[-*+]\s+/gm, '') // Remove bullet points
+      .replace(/\n\s*\n\s*\n/g, '\n\n') // Normalize multiple line breaks
+      .trim();
+    
+    subsections.push({ title, content });
+  }
+  
+  return subsections;
 };
 
 // --- UI Components for different states ---
@@ -209,8 +285,7 @@ const ErrorState = ({ error }: { error: string }) => (
 );
 
 // --- Navigation Component ---
-const PlanningNavbar = () => {
-  const { user } = useUser();
+const PlanningNavbar = ({ onExportPDF }: { onExportPDF?: () => void }) => {
   
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60">
@@ -248,13 +323,20 @@ const PlanningNavbar = () => {
 
         <div className="flex items-center space-x-3">
           <SignedIn>
+            {onExportPDF && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onExportPDF}
+                className="hidden sm:flex bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 hover:from-green-600 hover:to-emerald-700 shadow-lg shadow-green-500/25"
+              >
+                <FileDown className="w-4 h-4 mr-2" />
+                Export PDF
+              </Button>
+            )}
             <Button variant="outline" size="sm" className="hidden sm:flex">
               <Share2 className="w-4 h-4 mr-2" />
               Share
-            </Button>
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              <Download className="w-4 h-4 mr-2" />
-              Export
             </Button>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
@@ -333,6 +415,105 @@ function PlanningPageContent() {
   }, []);
 
   const sections = useMemo(() => parsePlanIntoSections(plan || ''), [plan]);
+
+  // PDF Export functionality
+  const exportToPDF = async () => {
+    if (!idea || !plan) return;
+    
+    try {
+      // Create a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+      
+      // Generate HTML content for PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${idea.idea} - Project Blueprint</title>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; color: #333; }
+            .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
+            .project-title { font-size: 28px; font-weight: bold; color: #1e293b; margin-bottom: 10px; }
+            .project-description { font-size: 16px; color: #64748b; max-width: 800px; margin: 0 auto; }
+            .metadata { display: flex; justify-content: space-around; margin: 20px 0; }
+            .metadata-item { text-align: center; }
+            .metadata-label { font-weight: bold; color: #475569; }
+            .metadata-value { color: #1e293b; }
+            .section { margin: 30px 0; page-break-inside: avoid; }
+            .section-title { font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 15px; border-left: 4px solid #3b82f6; padding-left: 10px; }
+            .subsection { margin: 20px 0; }
+            .subsection-title { font-size: 16px; font-weight: bold; color: #475569; margin-bottom: 10px; }
+            .content { font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
+            .tech-stack { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+            .tech-item { background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+            @media print { body { margin: 20px; } .no-print { display: none; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="project-title">${idea.idea}</div>
+            <div class="project-description">${idea.description}</div>
+            <div class="metadata">
+              <div class="metadata-item">
+                <div class="metadata-label">Difficulty</div>
+                <div class="metadata-value">${idea.difficulty}</div>
+              </div>
+              <div class="metadata-item">
+                <div class="metadata-label">Timeline</div>
+                <div class="metadata-value">${idea.estimatedTime}</div>
+              </div>
+              <div class="metadata-item">
+                <div class="metadata-label">Tech Stack</div>
+                <div class="tech-stack">
+                  ${idea.techStack.map(tech => `<span class="tech-item">${tech}</span>`).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          ${sections.map(section => {
+            const subsections = parseSubsections(section.content);
+            return `
+              <div class="section">
+                <div class="section-title">${section.title}</div>
+                ${subsections.map(subsection => {
+                  if (subsection.title) {
+                    return `
+                      <div class="subsection">
+                        <div class="subsection-title">${subsection.title}</div>
+                        <div class="content">${subsection.content.replace(/\n/g, '<br>')}</div>
+                      </div>
+                    `;
+                  } else {
+                    return `<div class="content">${subsection.content.replace(/\n/g, '<br>')}</div>`;
+                  }
+                }).join('')}
+              </div>
+            `;
+          }).join('')}
+          
+          <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 12px;">
+            Generated by xxit - SaaS Idea Generator | ${new Date().toLocaleDateString()}
+          </div>
+        </body>
+        </html>
+      `;
+      
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      
+      // Wait for content to load then print
+      printWindow.onload = () => {
+        printWindow.print();
+        printWindow.close();
+      };
+      
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Failed to export PDF. Please try again.');
+    }
+  };
 
   useEffect(() => {
     if (sections.length === 0) return;
@@ -453,7 +634,7 @@ function PlanningPageContent() {
 
   return (
     <>
-      <PlanningNavbar />
+      <PlanningNavbar onExportPDF={exportToPDF} />
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <div className="space-y-8">
@@ -621,11 +802,11 @@ function PlanningPageContent() {
               {/* Main Content Area */}
               <div className="lg:col-span-8 xl:col-span-9">
                 <div className="space-y-8">
-                  {sections.map(({ title, content }, index) => (
+                  {sections.map(({ title, content }, sectionIndex) => (
                     <Card
                       key={title}
                       id={title.toLowerCase().replace(/\s/g, '-')}
-                      ref={(el) => { sectionRefs.current[index] = el; }}
+                      ref={(el) => { sectionRefs.current[sectionIndex] = el; }}
                       className="scroll-mt-24 border-0 shadow-xl overflow-hidden bg-white/80 backdrop-blur hover:shadow-2xl transition-all duration-300 group"
                     >
                       <CardHeader className="bg-gradient-to-r from-slate-50 via-blue-50/50 to-indigo-50/50 border-b border-slate-100">
@@ -643,7 +824,7 @@ function PlanningPageContent() {
                             </span>
                             <div className="flex items-center space-x-2 mt-2">
                               <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                Section {index + 1}
+                                Section {sectionIndex + 1}
                               </Badge>
                               <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200">
                                 AI Generated
@@ -656,30 +837,50 @@ function PlanningPageContent() {
                         <ScrollArea className="h-auto max-h-[700px]">
                           <div className="p-8">
                             <div className="prose prose-base max-w-none text-slate-700 leading-relaxed">
-                              {content.split('\n\n').map((paragraph, index) => {
-                                // Check if it's a subsection header (starts with ###)
-                                if (paragraph.trim().startsWith('###')) {
-                                  const headerText = paragraph.replace(/^###\s*/, '').trim();
-                                  return (
-                                    <div key={index} className="mt-8 mb-4">
-                                      <h3 className="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-4">
-                                        {headerText}
-                                      </h3>
-                                    </div>
-                                  );
-                                }
+                              {(() => {
+                                const subsections = parseSubsections(content);
                                 
-                                // Regular paragraph
-                                if (paragraph.trim()) {
-                                  return (
-                                    <p key={index} className="text-base text-slate-700 leading-relaxed mb-4">
-                                      {paragraph.trim()}
-                                    </p>
-                                  );
-                                }
-                                
-                                return null;
-                              })}
+                                return subsections.map((subsection, subIndex) => {
+                                  if (subsection.title) {
+                                    // This is a subsection with a title
+                                    return (
+                                      <div key={subIndex} className="mb-8">
+                                        <div className="flex items-center space-x-3 mb-4">
+                                          <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                                            {getSubsectionIcon(subsection.title)}
+                                          </div>
+                                          <h3 className="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 flex-1">
+                                            {subsection.title}
+                                          </h3>
+                                        </div>
+                                        <div className="ml-6 pl-4 border-l-2 border-blue-100">
+                                          {subsection.content.split('\n\n').map((paragraph, pIndex) => (
+                                            paragraph.trim() && (
+                                              <p key={pIndex} className="text-base text-slate-700 leading-relaxed mb-4">
+                                                {paragraph.trim()}
+                                              </p>
+                                            )
+                                          ))}
+                                        </div>
+                                      </div>
+                                    );
+                                  } else {
+                                    // This is general content without a subsection title
+                                    return (
+                                      <div key={subIndex} className="mb-6">
+                                        {subsection.content.split('\n\n').map((paragraph, pIndex) => (
+                                          paragraph.trim() && (
+                                            <p key={pIndex} className="text-base text-slate-700 leading-relaxed mb-4">
+                                              {paragraph.trim()}
+                                            </p>
+                                          )
+                                        ))}
+                                      </div>
+                                    );
+                                  }
+                                });
+                              })()
+                              }
                             </div>
                           </div>
                         </ScrollArea>
