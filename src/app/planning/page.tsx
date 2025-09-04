@@ -1,9 +1,6 @@
-// app/planning/page.tsx
-
 "use client";
 
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import {
   Loader2,
@@ -15,10 +12,20 @@ import {
   Target,
   TrendingUp,
   BrainCircuit,
-  CheckCircle2,
   Sparkles,
+  Clock,
+  Zap,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
+
+// shadcn/ui imports
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // --- Types and Constants ---
 
@@ -43,8 +50,6 @@ interface PlanningError {
   details?: unknown;
 }
 
-// Unused types 'PlanError' and 'PlanResponse' have been removed.
-
 const SECTION_ICONS: { [key: string]: React.ReactNode } = {
   "Technical Architecture": <Component className="w-5 h-5" />,
   "Team Roles & Responsibilities": <Users className="w-5 h-5" />,
@@ -56,97 +61,125 @@ const SECTION_ICONS: { [key: string]: React.ReactNode } = {
 
 // --- Helper Functions ---
 
-const getDifficultyColor = (difficulty: string) => {
+const getDifficultyVariant = (difficulty: string) => {
   switch (difficulty?.toLowerCase()) {
-    case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
-    case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
-    case 'hard': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
-    default: return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
+    case 'easy': return 'default';
+    case 'medium': return 'secondary';
+    case 'hard': return 'destructive';
+    default: return 'outline';
   }
 };
 
-const parsePlanIntoSections = (plan: string): Section[] => {
+const parsePlanIntoSections = (planText: string): Section[] => {
+  if (!planText) return [];
   const sectionRegex = /(?:^|\n)##\s(.+)/g;
-  const sections = plan.split(sectionRegex).filter(Boolean);
+  const parts = planText.split(sectionRegex).filter(part => part.trim() !== '');
 
-  if (sections.length <= 1) {
-    return [{ title: "Project Plan", content: plan, icon: SECTION_ICONS["default"] }];
+  if (parts.length <= 1) {
+    return [{ title: "Project Plan", content: planText, icon: SECTION_ICONS["default"] }];
   }
-  
+
   const structuredSections: Section[] = [];
-  for (let i = 0; i < sections.length; i += 2) {
-    const title = sections[i].trim();
-    const content = sections[i + 1] ? sections[i+1].trim() : '';
-    const mainTitle = title.replace(/\d+\.\s*/, '');
-    const icon = Object.entries(SECTION_ICONS).find(([key]) => mainTitle.includes(key))?.[1] || SECTION_ICONS["default"];
-    structuredSections.push({ title: mainTitle, content, icon });
+  for (let i = 0; i < parts.length; i += 2) {
+    const title = parts[i].trim();
+    const content = parts[i + 1] ? parts[i + 1].trim() : '';
+    const icon = Object.entries(SECTION_ICONS).find(([key]) => title.includes(key))?.[1] || SECTION_ICONS["default"];
+    structuredSections.push({ title, content, icon });
   }
   return structuredSections;
 };
 
-// --- UI Components ---
+// --- UI Components for different states ---
 
 const LoadingState = () => (
-  <div className="text-center py-20">
-    <div className="inline-block relative">
-      <Loader2 className="w-16 h-16 animate-spin text-indigo-600" />
-      <Sparkles className="w-8 h-8 text-amber-400 absolute -top-2 -right-2" />
-    </div>
-    <h3 className="text-3xl font-bold text-slate-800 mt-6">Generating Your Blueprint...</h3>
-    <p className="text-slate-500 text-lg mt-2">The AI is crafting a detailed plan. This may take a moment.</p>
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20">
+    <Card className="w-full max-w-md mx-4">
+      <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="relative">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <Sparkles className="w-6 h-6 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
+        </div>
+        <div className="text-center space-y-2">
+          <CardTitle className="text-2xl">Generating Your Blueprint</CardTitle>
+          <CardDescription>
+            The AI is crafting a detailed plan. This may take a moment.
+          </CardDescription>
+        </div>
+      </CardContent>
+    </Card>
   </div>
 );
 
 const ErrorState = ({ error }: { error: string }) => (
-  <div className="max-w-2xl mx-auto bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
-    <ServerCrash className="w-12 h-12 text-red-500 mx-auto" />
-    <h4 className="font-bold text-2xl text-red-800 mt-4">Generation Failed</h4>
-    <p className="text-red-600 mt-2">{error}</p>
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+    <Card className="w-full max-w-md">
+      <CardContent className="p-6">
+        <Alert variant="destructive">
+          <ServerCrash className="h-4 w-4" />
+          <AlertDescription className="mt-2">
+            <strong>Generation Failed</strong>
+            <br />
+            {error}
+          </AlertDescription>
+        </Alert>
+      </CardContent>
+    </Card>
   </div>
 );
 
 const EmptyState = () => (
-    <div className="text-center max-w-xl mx-auto bg-white rounded-2xl border border-slate-200 p-10">
-      <Lightbulb className="w-12 h-12 text-indigo-500 mx-auto" />
-      <h3 className="text-2xl font-bold text-slate-800 mt-4">No Project Selected</h3>
-      <p className="text-slate-500 mt-2">Please select a project from your history to generate a new plan.</p>
-    </div>
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/20 p-4">
+    <Card className="w-full max-w-md">
+      <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
+        <Lightbulb className="w-12 h-12 text-primary" />
+        <div className="text-center space-y-2">
+          <CardTitle className="text-2xl">No Project Selected</CardTitle>
+          <CardDescription>
+            Please go back and select a project to generate a development plan.
+          </CardDescription>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
 );
 
-const PlanSidebar = ({ sections, activeSection }: { sections: Section[], activeSection: string }) => (
-  <nav className="sticky top-24 space-y-2">
-    <h3 className="px-3 text-sm font-semibold text-slate-500 uppercase tracking-wider">Plan Sections</h3>
-    {sections.map(({ title, icon }) => {
-        const isActive = activeSection === title;
-        return (
-          <a
-            key={title}
-            href={`#${title.toLowerCase().replace(/\s/g, '-')}`}
-            className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors duration-200 ${
-              isActive ? 'bg-indigo-50 text-indigo-700 font-bold' : 'text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            <span className={isActive ? 'text-indigo-600' : 'text-slate-400'}>{icon}</span>
-            <span>{title}</span>
-          </a>
-        );
-    })}
-  </nav>
-);
+// --- Page Content Component ---
 
-const PlanDisplay = ({ idea, plan }: { idea: Idea, plan: string }) => {
-  const sections = useMemo(() => parsePlanIntoSections(plan), [plan]);
-  const [activeSection, setActiveSection] = useState<string>(sections[0]?.title || "");
+function PlanningPageContent() {
+  const historyId = useMemo(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+    return new URLSearchParams(window.location.search).get("historyId");
+  }, []);
+
+  const [plan, setPlan] = useState<string | null>(null);
+  const [idea, setIdea] = useState<Idea | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string>('');
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
 
+  const sections = useMemo(() => parsePlanIntoSections(plan || ''), [plan]);
+
   useEffect(() => {
+    if (sections.length === 0) return;
+
+    if (!activeSection) {
+      setActiveSection(sections[0].title);
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const id = entry.target.id;
-            const title = sections.find(s => id === s.title.toLowerCase().replace(/\s/g, '-'))?.title;
-            if (title) setActiveSection(title);
+            const sectionId = entry.target.id;
+            const section = sections.find(
+              (s) => s.title.toLowerCase().replace(/\s/g, '-') === sectionId
+            );
+            if (section) {
+              setActiveSection(section.title);
+            }
           }
         });
       },
@@ -158,119 +191,44 @@ const PlanDisplay = ({ idea, plan }: { idea: Idea, plan: string }) => {
       if (ref) observer.observe(ref);
     });
 
-    // This cleanup function now uses the captured 'currentRefs' variable
-    // to avoid the exhaustive-deps warning.
     return () => {
       currentRefs.forEach((ref) => {
         if (ref) observer.unobserve(ref);
       });
     };
-  }, [sections]);
-
-  return (
-    <div className="flex flex-col lg:flex-row lg:space-x-12">
-      {/* --- Left Sidebar --- */}
-      <aside className="w-full lg:w-1/4 mb-10 lg:mb-0">
-        <PlanSidebar sections={sections} activeSection={activeSection} />
-      </aside>
-
-      {/* --- Right Content --- */}
-      <main className="flex-1 space-y-16">
-        {/* Project Overview Header */}
-        <header className="space-y-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">{idea.idea}</h1>
-          <p className="text-xl text-slate-600">{idea.description}</p>
-          <div className="pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white border border-slate-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-slate-500 mb-1">Difficulty</p>
-                  <p className={`text-sm font-semibold inline-flex items-center px-2.5 py-0.5 rounded-full ${getDifficultyColor(idea.difficulty)}`}>{idea.difficulty}</p>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-slate-500 mb-1">Timeline</p>
-                  <p className="font-semibold text-slate-800">{idea.estimatedTime}</p>
-              </div>
-              <div className="bg-white border border-slate-200 rounded-lg p-3 col-span-2">
-                  <p className="text-sm font-medium text-slate-500 mb-1">Tech Stack</p>
-                  <div className="flex flex-wrap gap-1.5">
-                      {idea.techStack.map(tech => <span key={tech} className="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-0.5 rounded">{tech}</span>)}
-                  </div>
-              </div>
-          </div>
-        </header>
-
-        {/* Plan Sections */}
-        <div className="space-y-12">
-          {sections.map(({ title, content }, index) => (
-            <section
-              key={title}
-              id={title.toLowerCase().replace(/\s/g, '-')}
-              ref={el => { sectionRefs.current[index] = el; }}
-              className="scroll-mt-24"
-            >
-              <div className="flex items-center space-x-3 mb-4">
-                <ChevronRight className="w-6 h-6 text-indigo-500" />
-                <h2 className="text-3xl font-bold text-slate-800">{title}</h2>
-              </div>
-              <article className="prose prose-lg prose-indigo max-w-none text-slate-700 prose-headings:text-slate-800 prose-a:text-indigo-600 prose-strong:text-slate-800">
-                <ReactMarkdown>{content}</ReactMarkdown>
-              </article>
-            </section>
-          ))}
-        </div>
-
-        {/* Success Footer */}
-        <footer className="text-center pt-8">
-            <div className="bg-green-50 rounded-xl border border-green-200 p-6 inline-flex items-center space-x-3">
-                <CheckCircle2 className="w-6 h-6 text-green-600"/>
-                <p className="font-semibold text-green-800">Plan Generated Successfully!</p>
-            </div>
-        </footer>
-      </main>
-    </div>
-  );
-};
-
-// --- Page Component ---
-
-function PlanningPageContent() {
-  const searchParams = useSearchParams();
-  const historyId = searchParams?.get("historyId");
-
-  const [plan, setPlan] = useState<string | null>(null);
-  const [idea, setIdea] = useState<Idea | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  }, [sections, activeSection]);
 
   const handleError = (error: unknown) => {
+    let message = 'An unknown error occurred.';
     if (error instanceof Error) {
-      setError(error.message);
+      message = error.message;
     } else if (typeof error === 'string') {
-      setError(error);
-    } else {
-      const planningError = error as PlanningError;
-      setError(planningError.message || 'Unknown error occurred');
+      message = error;
+    } else if (typeof error === 'object' && error !== null && 'message' in error) {
+      message = String((error as { message: unknown }).message);
     }
+    setError(message);
+    console.error("Planning Page Error:", error);
   };
 
   useEffect(() => {
     if (!historyId) {
-        setLoading(false);
-        return;
-    };
+      setLoading(false);
+      return;
+    }
 
     const fetchPlanAndIdea = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch both in parallel for speed
         const [ideaRes, planRes] = await Promise.all([
-            fetch(`/api/ideas/${historyId}`),
-            fetch(`/api/planning?historyId=${encodeURIComponent(historyId)}`)
+          fetch(`/api/ideas/${historyId}`),
+          fetch(`/api/planning?historyId=${encodeURIComponent(historyId)}`)
         ]);
 
         if (!ideaRes.ok || !planRes.ok) {
-            const errorData = !ideaRes.ok ? await ideaRes.json() : await planRes.json();
-            throw new Error(errorData.error || "Failed to fetch project data.");
+          const errorData = !ideaRes.ok ? await ideaRes.json() : await planRes.json();
+          throw new Error(errorData.error || "Failed to fetch project data.");
         }
 
         const ideaData = await ideaRes.json();
@@ -288,28 +246,162 @@ function PlanningPageContent() {
 
     fetchPlanAndIdea();
   }, [historyId]);
-  
-  const renderContent = () => {
-    if (loading) return <LoadingState />;
-    if (error) return <ErrorState error={error} />;
-    if (plan && idea) return <PlanDisplay idea={idea} plan={plan} />;
-    if (!historyId) return <EmptyState />;
-    return null;
-  }
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState error={error} />;
+  if (!historyId || !idea || !plan) return <EmptyState />;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-        {renderContent()}
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="space-y-6">
+          {/* Project Header Card */}
+          <Card className="overflow-hidden border-0 shadow-lg">
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background">
+              <CardHeader className="pb-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <CardTitle className="text-3xl font-bold tracking-tight">
+                      {idea.idea}
+                    </CardTitle>
+                    <CardDescription className="text-base leading-relaxed max-w-4xl">
+                      {idea.description}
+                    </CardDescription>
+                  </div>
+                  <BookOpen className="w-8 h-8 text-primary/60 mt-1" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="bg-background/60 backdrop-blur">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Zap className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Difficulty</p>
+                      </div>
+                      <Badge variant={getDifficultyVariant(idea.difficulty)} className="font-semibold">
+                        {idea.difficulty}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-background/60 backdrop-blur">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Timeline</p>
+                      </div>
+                      <p className="font-semibold text-foreground">{idea.estimatedTime}</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="bg-background/60 backdrop-blur md:col-span-2">
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Component className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-medium text-muted-foreground">Tech Stack</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {idea.techStack.map(tech => (
+                          <Badge key={tech} variant="secondary" className="text-xs">
+                            {tech}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </div>
+          </Card>
+
+          {/* Main Content Layout */}
+          <div className="grid lg:grid-cols-12 gap-6">
+            {/* Navigation Sidebar */}
+            <div className="lg:col-span-3">
+              <Card className="sticky top-6 border-0 shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <BookOpen className="w-5 h-5" />
+                    <span>Quick Navigation</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ScrollArea className="h-[calc(100vh-200px)]">
+                    <div className="space-y-1">
+                      {sections.map((section, index) => (
+                        <Button
+                          key={section.title}
+                          variant={activeSection === section.title ? "secondary" : "ghost"}
+                          className="w-full justify-start h-auto p-3 text-left"
+                          asChild
+                        >
+                          <a href={`#${section.title.toLowerCase().replace(/\s/g, '-')}`}>
+                            <div className="flex items-center space-x-3">
+                              <div className={`${
+                                activeSection === section.title 
+                                  ? 'text-primary' 
+                                  : 'text-muted-foreground'
+                              }`}>
+                                {section.icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">
+                                  {section.title}
+                                </p>
+                              </div>
+                              <ChevronRight className="w-4 h-4 opacity-50" />
+                            </div>
+                          </a>
+                        </Button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="lg:col-span-9">
+              <div className="space-y-6">
+                {sections.map(({ title, content }, index) => (
+                  <Card
+                    key={title}
+                    id={title.toLowerCase().replace(/\s/g, '-')}
+                    ref={(el) => { sectionRefs.current[index] = el; }}
+                    className="scroll-mt-6 border-0 shadow-lg overflow-hidden"
+                  >
+                    <CardHeader className="bg-gradient-to-r from-muted/50 to-background">
+                      <CardTitle className="flex items-center space-x-3 text-xl">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          {Object.entries(SECTION_ICONS).find(([key]) => 
+                            title.includes(key)
+                          )?.[1] || SECTION_ICONS["default"]}
+                        </div>
+                        <span>{title}</span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <ScrollArea className="h-auto max-h-[600px]">
+                        <div className="p-6">
+                          <article className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border">
+                            <ReactMarkdown>{content}</ReactMarkdown>
+                          </article>
+                        </div>
+                      </ScrollArea>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// The main export is now a wrapper that provides Suspense context for useSearchParams
 export default function PlanningPage() {
-  // Redundant and unused logic has been removed from this wrapper component.
-  // It now correctly wraps the content in a Suspense boundary, which is best practice.
   return (
     <React.Suspense fallback={<LoadingState />}>
       <PlanningPageContent />
