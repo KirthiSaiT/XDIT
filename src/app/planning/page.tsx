@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+// 'Separator' was removed from this import below as it was unused.
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // --- Types and Constants ---
@@ -44,11 +44,7 @@ interface Section {
   icon: React.ReactNode;
 }
 
-interface PlanningError {
-  message: string;
-  code?: string;
-  details?: unknown;
-}
+// The 'PlanningError' interface was removed as it was unused.
 
 const SECTION_ICONS: { [key: string]: React.ReactNode } = {
   "Technical Architecture": <Component className="w-5 h-5" />,
@@ -329,7 +325,8 @@ function PlanningPageContent() {
                 <CardContent className="pt-0">
                   <ScrollArea className="h-[calc(100vh-200px)]">
                     <div className="space-y-1">
-                      {sections.map((section, index) => (
+                      {/* The unused 'index' variable was removed from this map function. */}
+                      {sections.map((section) => (
                         <Button
                           key={section.title}
                           variant={activeSection === section.title ? "secondary" : "ghost"}
