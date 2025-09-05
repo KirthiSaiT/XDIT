@@ -803,7 +803,7 @@ function PlanningPageContent() {
                           <p className="text-sm font-semibold text-slate-700">Tech Stack</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                          {idea.techStack.map((tech, index) => (
+                          {idea.techStack.map((tech) => (
                             <Badge key={tech} variant="outline" className="text-xs font-medium bg-white/60 border-slate-200 hover:bg-slate-50 transition-colors">
                               {tech}
                             </Badge>
