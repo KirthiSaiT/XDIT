@@ -17,7 +17,6 @@ import {
   Code,
   Layers,
   Search,
-  MessageSquare,
   Award,
   Briefcase,
   PieChart,
@@ -364,53 +363,6 @@ export default function FeaturesPage() {
               <div className="bg-white rounded-xl border border-slate-200 p-6">
                 <h3 className="text-lg font-semibold text-slate-900 mb-3">Can teams collaborate on projects?</h3>
                 <p className="text-slate-600">Yes! Professional plans support up to 5 team members, while Enterprise plans offer unlimited team collaboration with role-based permissions and project sharing.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Final CTA */}
-        <div className="text-center">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-12 text-white">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Ideas?</h2>
-              <p className="text-xl mb-8 text-blue-100">
-                Join over 10,000 entrepreneurs who have built successful businesses with Xdit&apos;s AI-powered platform.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <SignedOut>
-                  <SignUpButton mode="modal">
-                    <button className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg text-lg">
-                      <span>Start Your Free Trial</span>
-                      <ArrowRight className="w-5 h-5 ml-2" />
-                    </button>
-                  </SignUpButton>
-                </SignedOut>
-                <SignedIn>
-                  <Link href="/" className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors shadow-lg text-lg">
-                    <span>Start Building Now</span>
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Link>
-                </SignedIn>
-                <button className="inline-flex items-center px-8 py-4 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition-colors text-lg">
-                  <MessageSquare className="w-5 h-5 mr-2" />
-                  Talk to Sales
-                </button>
-              </div>
-              
-              <div className="grid md:grid-cols-3 gap-8 mt-12 text-center">
-                <div>
-                  <div className="text-3xl font-bold mb-2">10,000+</div>
-                  <div className="text-blue-200">Active Users</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold mb-2">₹50Cr+</div>
-                  <div className="text-blue-200">Funding Raised</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold mb-2">95%</div>
-                  <div className="text-blue-200">Success Rate</div>
-                </div>
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 {
-  "name": "xxit",
+  "name": "xdit",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,6 +17,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "geist": "^1.4.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.2",
     "lucide-react": "^0.529.0",
     "mongoose": "^8.18.0",
     "next": "15.4.4",

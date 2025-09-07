@@ -16,13 +16,10 @@ import {
   Sparkles,
   Clock,
   Zap,
-  ChevronRight,
   BookOpen,
   ArrowLeft,
-  Share2,
   UserPlus,
   History,
-  FileDown,
   Shield,
   Users2,
   DollarSign,
@@ -52,6 +49,7 @@ import { Separator } from "@/components/ui/separator";
 
 interface Idea {
   idea: string;
+  title?: string;
   description: string;
   difficulty: string;
   estimatedTime: string;
@@ -87,61 +85,6 @@ const SECTION_ICONS: { [key: string]: React.ReactNode } = {
   "Additional Tools": <Zap className="w-5 h-5" />,
   "AI/ML Components": <BrainCircuit className="w-5 h-5" />,
   "default": <BrainCircuit className="w-5 h-5" />
-};
-
-// Helper function to get icons for subsections
-const getSubsectionIcon = (subsectionTitle: string): React.ReactNode => {
-  const title = subsectionTitle.toLowerCase();
-  
-  // Technical icons
-  if (title.includes('frontend') || title.includes('client') || title.includes('ui') || title.includes('react') || title.includes('vue') || title.includes('angular')) {
-    return <Component className="w-4 h-4 text-blue-600" />;
-  }
-  if (title.includes('backend') || title.includes('server') || title.includes('api') || title.includes('node') || title.includes('express') || title.includes('django')) {
-    return <Users className="w-4 h-4 text-green-600" />;
-  }
-  if (title.includes('database') || title.includes('db') || title.includes('storage') || title.includes('mongo') || title.includes('sql') || title.includes('postgres')) {
-    return <GanttChartSquare className="w-4 h-4 text-purple-600" />;
-  }
-  
-  // Business & Legal icons
-  if (title.includes('patent') || title.includes('intellectual property') || title.includes('ip') || title.includes('trademark')) {
-    return <Shield className="w-4 h-4 text-amber-600" />;
-  }
-  if (title.includes('competitor') || title.includes('competitive') || title.includes('competition') || title.includes('market position')) {
-    return <Users2 className="w-4 h-4 text-red-600" />;
-  }
-  if (title.includes('legal') || title.includes('compliance') || title.includes('regulatory') || title.includes('gdpr') || title.includes('terms')) {
-    return <Gavel className="w-4 h-4 text-slate-600" />;
-  }
-  if (title.includes('funding') || title.includes('investment') || title.includes('fundraising') || title.includes('valuation') || title.includes('investor')) {
-    return <DollarSign className="w-4 h-4 text-green-600" />;
-  }
-  if (title.includes('launch') || title.includes('go-to-market') || title.includes('marketing') || title.includes('customer acquisition')) {
-    return <Rocket className="w-4 h-4 text-orange-600" />;
-  }
-  if (title.includes('risk') || title.includes('threat') || title.includes('mitigation') || title.includes('challenge')) {
-    return <AlertTriangle className="w-4 h-4 text-red-600" />;
-  }
-  if (title.includes('metric') || title.includes('kpi') || title.includes('success') || title.includes('performance')) {
-    return <BarChart3 className="w-4 h-4 text-blue-600" />;
-  }
-  
-  // General business icons
-  if (title.includes('additional') || title.includes('tools') || title.includes('api') || title.includes('service') || title.includes('integration')) {
-    return <Zap className="w-4 h-4 text-orange-600" />;
-  }
-  if (title.includes('ai') || title.includes('ml') || title.includes('machine learning') || title.includes('artificial intelligence') || title.includes('model')) {
-    return <BrainCircuit className="w-4 h-4 text-indigo-600" />;
-  }
-  if (title.includes('mvp') || title.includes('feature') || title.includes('development') || title.includes('phase') || title.includes('milestone')) {
-    return <Target className="w-4 h-4 text-teal-600" />;
-  }
-  if (title.includes('market') || title.includes('revenue') || title.includes('monetization') || title.includes('pricing') || title.includes('business')) {
-    return <TrendingUp className="w-4 h-4 text-emerald-600" />;
-  }
-  
-  return <Sparkles className="w-4 h-4 text-slate-600" />;
 };
 
 // Helper function to get section priority and styling
@@ -332,7 +275,7 @@ const ErrorState = ({ error }: { error: string }) => (
 );
 
 // --- Navigation Component ---
-const PlanningNavbar = ({ onExportPDF }: { onExportPDF?: () => void }) => {
+const PlanningNavbar = () => {
   
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-lg supports-[backdrop-filter]:bg-white/60">
@@ -376,21 +319,6 @@ const PlanningNavbar = ({ onExportPDF }: { onExportPDF?: () => void }) => {
 
         <div className="flex items-center space-x-3">
           <SignedIn>
-            {onExportPDF && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onExportPDF}
-                className="hidden sm:flex bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 hover:from-green-600 hover:to-emerald-700 shadow-lg shadow-green-500/25"
-              >
-                <FileDown className="w-4 h-4 mr-2" />
-                Export PDF
-              </Button>
-            )}
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </Button>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
           
@@ -469,104 +397,7 @@ function PlanningPageContent() {
 
   const sections = useMemo(() => parsePlanIntoSections(plan || ''), [plan]);
 
-  // PDF Export functionality
-  const exportToPDF = async () => {
-    if (!idea || !plan) return;
-    
-    try {
-      // Create a new window for printing
-      const printWindow = window.open('', '_blank');
-      if (!printWindow) return;
-      
-      // Generate HTML content for PDF
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>${idea.idea} - Project Blueprint</title>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; color: #333; }
-            .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; }
-            .project-title { font-size: 28px; font-weight: bold; color: #1e293b; margin-bottom: 10px; }
-            .project-description { font-size: 16px; color: #64748b; max-width: 800px; margin: 0 auto; }
-            .metadata { display: flex; justify-content: space-around; margin: 20px 0; }
-            .metadata-item { text-align: center; }
-            .metadata-label { font-weight: bold; color: #475569; }
-            .metadata-value { color: #1e293b; }
-            .section { margin: 30px 0; page-break-inside: avoid; }
-            .section-title { font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 15px; border-left: 4px solid #3b82f6; padding-left: 10px; }
-            .subsection { margin: 20px 0; }
-            .subsection-title { font-size: 16px; font-weight: bold; color: #475569; margin-bottom: 10px; }
-            .content { font-size: 14px; line-height: 1.6; margin-bottom: 15px; }
-            .tech-stack { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-            .tech-item { background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-            @media print { body { margin: 20px; } .no-print { display: none; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="project-title">${idea.idea}</div>
-            <div class="project-description">${idea.description}</div>
-            <div class="metadata">
-              <div class="metadata-item">
-                <div class="metadata-label">Difficulty</div>
-                <div class="metadata-value">${idea.difficulty}</div>
-              </div>
-              <div class="metadata-item">
-                <div class="metadata-label">Timeline</div>
-                <div class="metadata-value">${idea.estimatedTime}</div>
-              </div>
-              <div class="metadata-item">
-                <div class="metadata-label">Tech Stack</div>
-                <div class="tech-stack">
-                  ${idea.techStack.map(tech => `<span class="tech-item">${tech}</span>`).join('')}
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          ${sections.map(section => {
-            const subsections = parseSubsections(section.content);
-            return `
-              <div class="section">
-                <div class="section-title">${section.title}</div>
-                ${subsections.map(subsection => {
-                  if (subsection.title) {
-                    return `
-                      <div class="subsection">
-                        <div class="subsection-title">${subsection.title}</div>
-                        <div class="content">${subsection.content.replace(/\n/g, '<br>')}</div>
-                      </div>
-                    `;
-                  } else {
-                    return `<div class="content">${subsection.content.replace(/\n/g, '<br>')}</div>`;
-                  }
-                }).join('')}
-              </div>
-            `;
-          }).join('')}
-          
-          <div style="margin-top: 40px; text-align: center; color: #64748b; font-size: 12px;">
-            Generated by Xdit - Advanced SaaS Blueprint Generator | ${new Date().toLocaleDateString()}
-          </div>
-        </body>
-        </html>
-      `;
-      
-      printWindow.document.write(htmlContent);
-      printWindow.document.close();
-      
-      // Wait for content to load then print
-      printWindow.onload = () => {
-        printWindow.print();
-        printWindow.close();
-      };
-      
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-      alert('Failed to export PDF. Please try again.');
-    }
-  };
+
 
   useEffect(() => {
     if (sections.length === 0) return;
@@ -687,7 +518,7 @@ function PlanningPageContent() {
 
   return (
     <>
-      <PlanningNavbar onExportPDF={exportToPDF} />
+      <PlanningNavbar />
       <div className="min-h-screen bg-gradient-to-br from-slate-50/80 via-blue-50/20 to-indigo-50/20">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <div className="space-y-8">
@@ -805,7 +636,7 @@ function PlanningPageContent() {
                   <CardContent className="pt-0">
                     <ScrollArea className="h-[calc(100vh-300px)]">
                       <div className="space-y-3">
-                        {sections.map((section, sectionIdx) => (
+                        {sections.map((section) => (
                           <div
                             key={section.title}
                             className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"

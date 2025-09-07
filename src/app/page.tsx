@@ -295,7 +295,7 @@ const Home: React.FC = () => {
             Discover Your Next Big
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-              SaaS Product Idea
+               Product Idea
             </span>
           </h1>
 

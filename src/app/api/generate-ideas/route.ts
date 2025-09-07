@@ -3,6 +3,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { PerplexityService } from "@/backend/services/perplexity";
 import { generateProjectIdeas } from "@/backend/services/idea-generator";
 import { DatabaseService } from "@/backend/services/database";
+import { IProjectIdea } from "@/backend/models/ProjectIdea";
 
 // Interface for the incoming request payload
 interface GenerateRequest {
@@ -19,16 +20,21 @@ interface GenerateRequest {
 interface ProjectIdea {
   idea: string; // Frontend expects 'idea', not 'title'
   description: string;
-  techStack?: string[];
-  difficulty?: "Easy" | "Medium" | "Hard";
-  estimatedTime?: string;
-  marketNeed?: string;
-  marketValue?: string;
-  sourceLinks?: string[];
+  techStack: string[];
+  difficulty: "Easy" | "Medium" | "Hard";
+  estimatedTime: string;
+  marketNeed: string;
+  marketValue: string;
+  sourceLinks: string[];
   _id: string;
   createdAt: string;
   keywords: string[];
-  sources?: SourceItem[];
+  sources: {
+    title?: string;
+    url?: string;
+    snippet?: string;
+    source?: string;
+  }[];
 }
 
 // Interface for the final API response
@@ -41,11 +47,9 @@ interface GenerateResponse {
   error?: string;
 }
 
-// Interface for handling errors
-interface ErrorResponse {
-  message: string;
-  code?: string;
-  details?: unknown;
+// Type guard function to ensure difficulty is valid
+function isValidDifficulty(difficulty: string | undefined): difficulty is "Easy" | "Medium" | "Hard" {
+  return difficulty === "Easy" || difficulty === "Medium" || difficulty === "Hard";
 }
 
 // Interface for source items from the backend service
@@ -120,7 +124,7 @@ export async function POST(
     const researchKeywords = ideas
       .flatMap(
         (idea) =>
-          idea.sources?.map((source: SourceItem) => source.title || source.url) ||
+          idea.sources?.map((source) => source.title || source.url) ||
           []
       )
       .filter(Boolean);
@@ -140,7 +144,7 @@ export async function POST(
     }
 
     // Save the generated ideas to the database and get the actual MongoDB IDs
-    const savedIdeas: any[] = [];
+    const savedIdeas: IProjectIdea[] = [];
     try {
       for (const idea of ideas) {
         const savedIdea = await DatabaseService.createProjectIdea({
@@ -172,43 +176,67 @@ export async function POST(
     }
 
     // Transform the backend idea structure to match the frontend's expected structure
-    // Use the actual MongoDB IDs from the saved ideas
-    const transformedIdeas = savedIdeas.map((savedIdea, index) => ({
-      idea: savedIdea.title, // Map title back to idea for frontend compatibility
-      description: savedIdea.description,
-      marketNeed: savedIdea.marketValue, // Use marketValue as marketNeed for frontend compatibility
-      marketValue: savedIdea.marketValue,
-      techStack: savedIdea.techStack,
-      difficulty: savedIdea.difficulty,
-      estimatedTime: savedIdea.estimatedTime,
-      sourceLinks: savedIdea.sources?.map((source: SourceItem) => source.url) || [],
-      _id: savedIdea._id.toString(), // Use the actual MongoDB ObjectId
-      createdAt: savedIdea.createdAt.toISOString(),
-      keywords: savedIdea.keywords,
-      sources: savedIdea.sources,
-    }));
+    // Use the actual MongoDB IDs from the saved ideas with proper type safety
+    const transformedIdeas: ProjectIdea[] = savedIdeas.map((savedIdea) => {
+      // Ensure difficulty is properly typed using type guard
+      const difficulty: "Easy" | "Medium" | "Hard" = isValidDifficulty(savedIdea.difficulty) 
+        ? savedIdea.difficulty 
+        : "Medium";
+      
+      // Clean and filter source URLs
+      const sourceLinks = savedIdea.sources
+        ?.map((source) => source.url)
+        .filter((url): url is string => typeof url === 'string' && url.length > 0) || [];
+      
+      // Ensure all required fields have proper values
+      return {
+        idea: savedIdea.title || 'Untitled Project', // Map title back to idea for frontend compatibility
+        description: savedIdea.description || 'No description available',
+        marketNeed: savedIdea.marketValue || 'Market analysis pending', // Use marketValue as marketNeed for frontend compatibility
+        marketValue: savedIdea.marketValue || 'Value assessment pending',
+        techStack: savedIdea.techStack || [],
+        difficulty,
+        estimatedTime: savedIdea.estimatedTime || 'Time estimate pending',
+        sourceLinks,
+        _id: String(savedIdea._id), // Use the actual MongoDB ObjectId
+        createdAt: (savedIdea.createdAt as Date).toISOString(),
+        keywords: savedIdea.keywords || [],
+        sources: savedIdea.sources || [],
+      };
+    });
 
     console.log(
       `Generated ${transformedIdeas.length} ideas with ${allKeywords.length} keywords`
     );
 
     // Return a successful response with the keywords and transformed ideas
-    return NextResponse.json({
+    const response: GenerateResponse = {
       success: true,
       data: {
         keywords: allKeywords,
         projectIdeas: transformedIdeas,
       },
-    });
+    };
+    
+    return NextResponse.json(response);
   } catch (error: unknown) {
-    const errorDetails = error as ErrorResponse;
-    console.error("❌ Failed to generate ideas:", errorDetails);
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorDetails.message || "An unknown error occurred",
-      },
-      { status: 500 }
-    );
+    console.error("❌ Failed to generate ideas:", error);
+    
+    // Type-safe error handling
+    let errorMessage = "An unknown error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof error === 'object' && 'message' in error) {
+      errorMessage = String((error as { message: unknown }).message);
+    }
+    
+    const errorResponse: GenerateResponse = {
+      success: false,
+      error: errorMessage,
+    };
+    
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
