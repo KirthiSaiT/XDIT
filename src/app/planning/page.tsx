@@ -176,95 +176,65 @@ const getDifficultyVariant = (difficulty: string) => {
 const parsePlanIntoSections = (planText: string): Section[] => {
   if (!planText) return [];
   
-  // Clean up the plan text first
+  // Comprehensive text cleaning for Indian market content
   const cleanedText = planText
     .replace(/<think>[\s\S]*?<\/think>/g, '') // Remove thinking tags
     .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
     .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
-    .replace(/^\s*[-*+]\s+/gm, '') // Remove bullet points
+    .replace(/_{1,2}(.*?)_{1,2}/g, '$1') // Remove underline markdown
+    .replace(/`{1,3}(.*?)`{1,3}/g, '$1') // Remove code markdown
+    .replace(/#{1,6}\s*/g, '') // Remove heading markers
+    .replace(/^\s*[-*+•]\s+/gm, '') // Remove bullet points
+    .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered lists
+    .replace(/[\$#%^@&*()_+=\[\]{}|\\:;"'<>?,./~`!]/g, ' ') // Remove special characters
+    .replace(/\s+/g, ' ') // Normalize whitespace
     .replace(/\n\s*\n/g, '\n\n') // Normalize line breaks
     .trim();
   
-  const sectionRegex = /(?:^|\n)##\s(.+)/g;
-  const parts = cleanedText.split(sectionRegex).filter(part => part.trim() !== '');
+  // For Indian student market, create a single comprehensive section
+  const indianMarketContent = cleanedText
+    .replace(/USD|\$|dollars?/gi, 'INR or rupees')
+    .replace(/US market|American market/gi, 'Indian market')
+    .replace(/Silicon Valley|US startups/gi, 'Indian startup ecosystem')
+    .replace(/venture capital|VC/gi, 'Indian investors and funding')
+    .replace(/enterprise|corporations/gi, 'Indian businesses and educational institutions')
+    .split('\n\n')
+    .filter(para => para.trim().length > 0)
+    .map(para => para.trim())
+    .join(' ');
 
-  if (parts.length <= 1) {
-    return [{ title: "Project Plan", content: cleanedText, icon: SECTION_ICONS["default"] }];
-  }
-
-  const structuredSections: Section[] = [];
-  for (let i = 0; i < parts.length; i += 2) {
-    const title = parts[i].trim();
-    let content = parts[i + 1] ? parts[i + 1].trim() : '';
-    
-    // Further clean the content
-    content = content
-      .replace(/^\s*[-*+]\s+/gm, '') // Remove any remaining bullet points
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove any remaining bold markdown
-      .replace(/\*(.*?)\*/g, '$1') // Remove any remaining italic markdown
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .join('\n\n');
-    
-    // Special handling for Technical Requirements section to ensure proper subsection formatting
-    if (title.toLowerCase().includes('technical') && title.toLowerCase().includes('requirements')) {
-      // Ensure common tech stack categories are properly formatted as subsections if not already
-      const techCategories = ['Frontend', 'Backend', 'Database', 'Additional Tools', 'AI/ML Components'];
-      
-      techCategories.forEach(category => {
-        const categoryRegex = new RegExp(`(?:^|\n)(${category}[^\n]*?)(?=\n|$)`, 'i');
-        if (categoryRegex.test(content) && !content.includes(`### ${category}`)) {
-          content = content.replace(categoryRegex, `\n### ${category}\n`);
-        }
-      });
-    }
-    
-    const icon = Object.entries(SECTION_ICONS).find(([key]) => title.includes(key))?.[1] || SECTION_ICONS["default"];
-    structuredSections.push({ title, content, icon });
-  }
-  return structuredSections;
+  return [{ 
+    title: "Complete Project Analysis for Indian Student Market", 
+    content: indianMarketContent, 
+    icon: SECTION_ICONS["default"] 
+  }];
 };
 
-// Helper function to parse subsections within content
+// Helper function to parse content as continuous paragraphs for Indian students
 const parseSubsections = (content: string) => {
-  const subsectionRegex = /###\s(.+)/g;
-  const parts = content.split(subsectionRegex);
+  // Return content as a single continuous block without subsections
+  const cleanContent = content
+    .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+    .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
+    .replace(/_{1,2}(.*?)_{1,2}/g, '$1') // Remove underline markdown
+    .replace(/`{1,3}(.*?)`{1,3}/g, '$1') // Remove code markdown
+    .replace(/#{1,6}\s*/g, '') // Remove heading markers
+    .replace(/^\s*[-*+•]\s+/gm, '') // Remove bullet points
+    .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered lists
+    .replace(/[\$#%^@&*()_+=\[\]{}|\\:;"'<>?,./~`!]/g, ' ') // Remove special characters
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .replace(/technical jargon|ARR|MRR|CAC|LTV|B2B|B2C|SaaS/gi, 'business terms')
+    .replace(/startup|venture/gi, 'business opportunity')
+    .trim();
   
-  if (parts.length <= 1) {
-    return [{ title: '', content: content }];
-  }
-  
-  const subsections = [];
-  // First part before any subsection
-  if (parts[0].trim()) {
-    subsections.push({ title: '', content: parts[0].trim() });
-  }
-  
-  // Process subsections
-  for (let i = 1; i < parts.length; i += 2) {
-    const title = parts[i]?.trim() || '';
-    let content = parts[i + 1]?.trim() || '';
-    
-    // Further clean the content - remove any remaining markdown
-    content = content
-      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
-      .replace(/\*(.*?)\*/g, '$1') // Remove italic markdown
-      .replace(/^\s*[-*+]\s+/gm, '') // Remove bullet points
-      .replace(/\n\s*\n\s*\n/g, '\n\n') // Normalize multiple line breaks
-      .trim();
-    
-    subsections.push({ title, content });
-  }
-  
-  return subsections;
+  return [{ title: '', content: cleanContent }];
 };
 
 // --- UI Components for different states ---
 
 const LoadingState = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-    <Card className="w-full max-w-lg mx-4 border-0 shadow-2xl">
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-50/50">
+    <Card className="w-full max-w-lg mx-4 border-0 shadow-xl">
       <CardContent className="flex flex-col items-center justify-center p-12 space-y-6">
         <div className="relative">
           <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-20"></div>
@@ -274,45 +244,45 @@ const LoadingState = () => (
           <Sparkles className="w-6 h-6 text-yellow-400 absolute -top-2 -right-2 animate-bounce" />
         </div>
         <div className="text-center space-y-4">
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-light bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Generating Comprehensive Business Intelligence
           </CardTitle>
-          <CardDescription className="text-lg text-slate-600 max-w-md">
+          <CardDescription className="text-lg text-slate-500 font-light max-w-md">
             Xdit AI is crafting a comprehensive business intelligence report using advanced market research, 
             patent analysis, competitive intelligence, and fundraising strategies. This may take 2-3 minutes.
           </CardDescription>
-          <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-slate-500">
+          <div className="mt-6 grid grid-cols-2 gap-3 text-sm text-slate-400">
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-              <span>Processing requirements</span>
+              <span className="font-light">Processing requirements</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span>Building architecture</span>
+              <span className="font-light">Building architecture</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-              <span>Patent research</span>
+              <span className="font-light">Patent research</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-              <span>Competitor analysis</span>
+              <span className="font-light">Competitor analysis</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
-              <span>Legal compliance</span>
+              <span className="font-light">Legal compliance</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-              <span>Fundraising strategy</span>
+              <span className="font-light">Fundraising strategy</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></div>
-              <span>Launch planning</span>
+              <span className="font-light">Launch planning</span>
             </div>
             <div className="flex items-center space-x-2 p-3 bg-white/60 rounded-lg">
               <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
-              <span>Risk assessment</span>
+              <span className="font-light">Risk assessment</span>
             </div>
           </div>
         </div>
@@ -718,7 +688,7 @@ function PlanningPageContent() {
   return (
     <>
       <PlanningNavbar onExportPDF={exportToPDF} />
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50/80 via-blue-50/20 to-indigo-50/20">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           <div className="space-y-8">
             {/* Back Navigation */}
@@ -728,7 +698,7 @@ function PlanningPageContent() {
                 className="flex items-center space-x-2 text-slate-600 hover:text-blue-600 transition-colors duration-200 group"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform duration-200" />
-                <span className="text-sm font-medium">Back to Ideas</span>
+                <span className="text-sm font-medium">Back to Generator</span>
               </Link>
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" className="shadow-sm">
@@ -739,7 +709,7 @@ function PlanningPageContent() {
             </div>
 
             {/* Project Header Card */}
-            <Card className="overflow-hidden border-0 shadow-xl bg-gradient-to-br from-white to-slate-50/50 backdrop-blur">
+            <Card className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-white/95 to-slate-50/50 backdrop-blur">
               <div className="bg-gradient-to-r from-blue-600/10 via-indigo-600/5 to-purple-600/10">
                 <CardHeader className="pb-6">
                   <div className="flex items-start justify-between">
@@ -752,10 +722,10 @@ function PlanningPageContent() {
                           AI Generated Blueprint
                         </Badge>
                       </div>
-                      <CardTitle className="text-4xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent leading-tight">
+                      <CardTitle className="text-4xl font-light tracking-tight bg-gradient-to-r from-slate-700 via-blue-700 to-indigo-700 bg-clip-text text-transparent leading-tight">
                         {idea.idea}
                       </CardTitle>
-                      <CardDescription className="text-lg leading-relaxed max-w-4xl text-slate-600">
+                      <CardDescription className="text-lg font-light leading-relaxed max-w-4xl text-slate-500 mt-4">
                         {idea.description}
                       </CardDescription>
                     </div>
@@ -774,9 +744,9 @@ function PlanningPageContent() {
                           <div className="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                             <Zap className="w-5 h-5 text-green-600" />
                           </div>
-                          <p className="text-sm font-semibold text-slate-700">Difficulty</p>
+                          <p className="text-sm font-medium text-slate-600">Difficulty</p>
                         </div>
-                        <Badge variant={getDifficultyVariant(idea.difficulty)} className="text-sm font-bold px-3 py-1">
+                        <Badge variant={getDifficultyVariant(idea.difficulty)} className="text-sm font-medium px-3 py-1">
                           {idea.difficulty}
                         </Badge>
                       </CardContent>
@@ -788,9 +758,9 @@ function PlanningPageContent() {
                           <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                             <Clock className="w-5 h-5 text-blue-600" />
                           </div>
-                          <p className="text-sm font-semibold text-slate-700">Timeline</p>
+                          <p className="text-sm font-medium text-slate-600">Timeline</p>
                         </div>
-                        <p className="font-bold text-slate-800 text-lg">{idea.estimatedTime}</p>
+                        <p className="font-medium text-slate-700 text-lg">{idea.estimatedTime}</p>
                       </CardContent>
                     </Card>
                     
@@ -800,7 +770,7 @@ function PlanningPageContent() {
                           <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                             <Component className="w-5 h-5 text-purple-600" />
                           </div>
-                          <p className="text-sm font-semibold text-slate-700">Tech Stack</p>
+                          <p className="text-sm font-medium text-slate-600">Tech Stack</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {idea.techStack.map((tech) => (
@@ -820,61 +790,42 @@ function PlanningPageContent() {
             <div className="grid lg:grid-cols-12 gap-8">
               {/* Navigation Sidebar */}
               <div className="lg:col-span-4 xl:col-span-3">
-                <Card className="sticky top-24 border-0 shadow-xl bg-white/80 backdrop-blur">
+                <Card className="sticky top-24 border-0 shadow-lg bg-white/90 backdrop-blur">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-xl flex items-center space-x-3">
                       <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg">
                         <BookOpen className="w-5 h-5 text-white" />
                       </div>
-                      <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">Quick Navigation</span>
+                      <span className="bg-gradient-to-r from-slate-700 to-slate-500 bg-clip-text text-transparent font-medium">Project Analysis</span>
                     </CardTitle>
-                    <CardDescription className="text-sm text-slate-500">
-                      Jump to any section of your project blueprint
+                    <CardDescription className="text-sm text-slate-400 font-light">
+                      Complete business analysis for Indian market
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <ScrollArea className="h-[calc(100vh-300px)]">
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {sections.map((section, sectionIdx) => (
-                          <Button
+                          <div
                             key={section.title}
-                            variant={activeSection === section.title ? "default" : "ghost"}
-                            className={`w-full justify-start h-auto p-4 text-left transition-all duration-200 group ${
-                              activeSection === section.title 
-                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                                : 'hover:bg-slate-50 hover:shadow-md'
-                            }`}
-                            asChild
+                            className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-100"
                           >
-                            <a href={`#${section.title.toLowerCase().replace(/\s/g, '-')}`}>
-                              <div className="flex items-center space-x-3 w-full">
-                                <div className={`p-2 rounded-lg transition-colors ${
-                                  activeSection === section.title 
-                                    ? 'bg-white/20' 
-                                    : 'bg-slate-100 group-hover:bg-slate-200'
-                                }`}>
-                                  <div className={activeSection === section.title ? 'text-white' : 'text-slate-600'}>
-                                    {section.icon}
-                                  </div>
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                                <div className="text-blue-600">
+                                  {section.icon}
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-medium truncate ${
-                                    activeSection === section.title ? 'text-white' : 'text-slate-700'
-                                  }`}>
-                                    {section.title}
-                                  </p>
-                                  <p className={`text-xs truncate mt-1 ${
-                                    activeSection === section.title ? 'text-blue-100' : 'text-slate-500'
-                                  }`}>
-                                    Section {sectionIdx + 1}
-                                  </p>
-                                </div>
-                                <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${
-                                  activeSection === section.title ? 'text-white' : 'text-slate-400'
-                                }`} />
                               </div>
-                            </a>
-                          </Button>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-slate-700">
+                                  {section.title}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                  Complete Analysis
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </ScrollArea>
@@ -892,7 +843,7 @@ function PlanningPageContent() {
                         key={title}
                         id={title.toLowerCase().replace(/\s/g, '-')}
                         ref={(el) => { sectionRefs.current[sectionIndex] = el; }}
-                        className={`scroll-mt-24 border-0 shadow-xl overflow-hidden bg-white/80 backdrop-blur hover:shadow-2xl transition-all duration-300 group`}
+                        className={`scroll-mt-24 border-0 shadow-lg overflow-hidden bg-white/90 backdrop-blur hover:shadow-xl transition-all duration-300 group`}
                       >
                         <CardHeader className={`bg-gradient-to-r ${sectionPriority.bg} border-b border-slate-100 relative overflow-hidden`}>
                           <CardTitle className="flex items-center space-x-4 text-2xl relative z-10">
@@ -904,95 +855,54 @@ function PlanningPageContent() {
                               </div>
                             </div>
                             <div className="flex-1">
-                              <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent font-bold transition-all duration-300">
+                              <span className="bg-gradient-to-r from-slate-700 to-slate-500 bg-clip-text text-transparent font-medium transition-all duration-300">
                                 {title}
                               </span>
                               <div className="flex items-center space-x-2 mt-2">
                                 <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                  Section {sectionIndex + 1}
+                                  Indian Market Analysis
                                 </Badge>
                                 <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200">
-                                  AI Generated
+                                  Student Focused
                                 </Badge>
                                 <Badge 
                                   variant="outline" 
-                                  className={`text-xs border-2 font-semibold ${
-                                    sectionPriority.priority === 'critical' ? 'bg-red-50 text-red-600 border-red-200' :
-                                    sectionPriority.priority === 'business' ? 'bg-green-50 text-green-600 border-green-200' :
-                                    sectionPriority.priority === 'legal' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                    'bg-blue-50 text-blue-600 border-blue-200'
-                                  }`}
+                                  className="text-xs border-2 font-medium bg-orange-50 text-orange-600 border-orange-200"
                                 >
-                                  {sectionPriority.priority.toUpperCase()}
+                                  AI GENERATED
                                 </Badge>
                               </div>
                             </div>
                             
-                            {/* Section Stats */}
+                            {/* Content Stats */}
                             <div className="hidden lg:flex flex-col items-center space-y-1">
-                              <div className="flex items-center space-x-1 text-sm text-slate-500">
+                              <div className="flex items-center space-x-1 text-sm text-slate-400">
                                 <Eye className="w-4 h-4" />
-                                <span>{Math.floor(Math.random() * 50) + 10}% read</span>
+                                <span className="font-light">Analysis</span>
                               </div>
-                              <div className="flex items-center space-x-1 text-sm text-slate-500">
+                              <div className="flex items-center space-x-1 text-sm text-slate-400">
                                 <Clock className="w-4 h-4" />
-                                <span>{Math.floor(Math.random() * 5) + 2} min</span>
+                                <span className="font-light">Complete</span>
                               </div>
                             </div>
                           </CardTitle>
                         </CardHeader>
                       <CardContent className="p-0">
                         <ScrollArea className="h-auto max-h-[700px]">
-                          <div className="p-8">
-                            <div className="prose prose-base max-w-none text-slate-700 leading-relaxed">
+                          <div className="p-10">
+                            <div className="prose prose-lg max-w-none text-slate-700 leading-relaxed">
                               {(() => {
                                 const subsections = parseSubsections(content);
                                 
-                                  return subsections.map((subsection, subIndex) => {
-                                    if (subsection.title) {
-                                      // This is a subsection with a title
-                                      return (
-                                        <div key={subIndex} className="mb-8">
-                                          <div className="flex items-center space-x-3 mb-4 group/subsection">
-                                            <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg transition-all duration-300">
-                                              {getSubsectionIcon(subsection.title)}
-                                            </div>
-                                            <h3 className="text-xl font-semibold text-slate-800 border-b border-slate-200 pb-2 flex-1 transition-colors duration-300">
-                                              {subsection.title}
-                                            </h3>
-                                          </div>
-                                          <div className="ml-6 pl-4 border-l-2 border-blue-100 hover:border-blue-300 transition-colors duration-300">
-                                            {subsection.content.split('\n\n').map((paragraph, pIndex) => (
-                                              paragraph.trim() && (
-                                                <p 
-                                                  key={pIndex} 
-                                                  className="text-base text-slate-700 leading-relaxed mb-4 hover:text-slate-900 transition-colors duration-200"
-                                                >
-                                                  {paragraph.trim()}
-                                                </p>
-                                              )
-                                            ))}
-                                          </div>
-                                        </div>
-                                      );
-                                    } else {
-                                      // This is general content without a subsection title
-                                      return (
-                                        <div key={subIndex} className="mb-6">
-                                          {subsection.content.split('\n\n').map((paragraph, pIndex) => (
-                                            paragraph.trim() && (
-                                              <p 
-                                                key={pIndex} 
-                                                className="text-base text-slate-700 leading-relaxed mb-4 hover:text-slate-900 transition-colors duration-200"
-                                              >
-                                                {paragraph.trim()}
-                                              </p>
-                                            )
-                                          ))}
-                                        </div>
-                                      );
-                                    }
-                                  });
+                                return subsections.map((subsection, subIndex) => (
+                                  <div key={subIndex} className="mb-0">
+                                    <div className="text-justify">
+                                      <p className="text-base text-slate-700 font-normal leading-relaxed text-justify">
+                                        {subsection.content}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ));
                               })()}
                             </div>
                           </div>

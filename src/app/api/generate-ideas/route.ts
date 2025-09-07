@@ -17,7 +17,7 @@ interface GenerateRequest {
 
 // Interface for the project ideas sent to the frontend
 interface ProjectIdea {
-  title: string;
+  idea: string; // Frontend expects 'idea', not 'title'
   description: string;
   techStack?: string[];
   difficulty?: "Easy" | "Medium" | "Hard";
@@ -25,6 +25,10 @@ interface ProjectIdea {
   marketNeed?: string;
   marketValue?: string;
   sourceLinks?: string[];
+  _id: string;
+  createdAt: string;
+  keywords: string[];
+  sources?: SourceItem[];
 }
 
 // Interface for the final API response
@@ -135,26 +139,11 @@ export async function POST(
       );
     }
 
-    // Transform the backend idea structure to match the frontend's expected structure
-    const transformedIdeas = ideas.map((idea) => ({
-      title: idea.idea,
-      description: idea.description,
-      marketNeed: idea.marketNeed,
-      marketValue: idea.marketValue,
-      techStack: idea.techStack,
-      difficulty: idea.difficulty,
-      estimatedTime: idea.estimatedTime,
-      sourceLinks: idea.sources?.map((source: SourceItem) => source.url) || [],
-      _id: idea._id || `idea-${Date.now()}-${Math.random()}`,
-      createdAt: new Date().toISOString(),
-      keywords: allKeywords,
-      sources: idea.sources,
-    }));
-
-    // Save the generated ideas to the database
+    // Save the generated ideas to the database and get the actual MongoDB IDs
+    const savedIdeas: any[] = [];
     try {
       for (const idea of ideas) {
-        await DatabaseService.createProjectIdea({
+        const savedIdea = await DatabaseService.createProjectIdea({
           title: idea.idea,
           description: idea.description,
           techStack: idea.techStack,
@@ -167,12 +156,37 @@ export async function POST(
           status: "published",
           userId: userId,
         });
+        savedIdeas.push(savedIdea);
       }
-      console.log(`✅ Saved ${ideas.length} ideas to MongoDB for user ${userId}`);
+      console.log(`✅ Saved ${savedIdeas.length} ideas to MongoDB for user ${userId}`);
     } catch (dbError) {
       console.error("❌ Error saving ideas to MongoDB:", dbError);
-      // The API will still return the generated ideas even if the DB save fails.
+      // Return error if database save fails since we need the proper IDs
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to save ideas to database",
+        },
+        { status: 500 }
+      );
     }
+
+    // Transform the backend idea structure to match the frontend's expected structure
+    // Use the actual MongoDB IDs from the saved ideas
+    const transformedIdeas = savedIdeas.map((savedIdea, index) => ({
+      idea: savedIdea.title, // Map title back to idea for frontend compatibility
+      description: savedIdea.description,
+      marketNeed: savedIdea.marketValue, // Use marketValue as marketNeed for frontend compatibility
+      marketValue: savedIdea.marketValue,
+      techStack: savedIdea.techStack,
+      difficulty: savedIdea.difficulty,
+      estimatedTime: savedIdea.estimatedTime,
+      sourceLinks: savedIdea.sources?.map((source: SourceItem) => source.url) || [],
+      _id: savedIdea._id.toString(), // Use the actual MongoDB ObjectId
+      createdAt: savedIdea.createdAt.toISOString(),
+      keywords: savedIdea.keywords,
+      sources: savedIdea.sources,
+    }));
 
     console.log(
       `Generated ${transformedIdeas.length} ideas with ${allKeywords.length} keywords`

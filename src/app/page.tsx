@@ -529,6 +529,17 @@ const Home: React.FC = () => {
                         </div>
                       )}
                       
+                      {/* Action Buttons */}
+                      <div className="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3">
+                        <Link 
+                          href={`/planning?historyId=${idea._id}`}
+                          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-lg shadow-green-500/25 hover:shadow-green-500/40"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          <span>Brief</span>
+                        </Link>
+                      </div>
+                      
                     </div>
                   </div>
                 ))}
